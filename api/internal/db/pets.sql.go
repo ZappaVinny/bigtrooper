@@ -24,7 +24,7 @@ type CreatePetParams struct {
 }
 
 func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, error) {
-	row := q.db.QueryRowContext(ctx, createPet,
+	row := q.db.QueryRow(ctx, createPet,
 		arg.OwnerID,
 		arg.Code,
 		arg.Name,
@@ -52,7 +52,7 @@ DELETE FROM pets WHERE id = $1
 `
 
 func (q *Queries) DeletePet(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deletePet, id)
+	_, err := q.db.Exec(ctx, deletePet, id)
 	return err
 }
 
@@ -61,7 +61,7 @@ SELECT id, owner_id, code, name, type, age, description, created_at, updated_at 
 `
 
 func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
-	row := q.db.QueryRowContext(ctx, getPetByCode, code)
+	row := q.db.QueryRow(ctx, getPetByCode, code)
 	var i Pet
 	err := row.Scan(
 		&i.ID,
@@ -82,7 +82,7 @@ SELECT id, owner_id, code, name, type, age, description, created_at, updated_at 
 `
 
 func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
-	row := q.db.QueryRowContext(ctx, getPetById, id)
+	row := q.db.QueryRow(ctx, getPetById, id)
 	var i Pet
 	err := row.Scan(
 		&i.ID,
@@ -113,7 +113,7 @@ type UpdatePetParams struct {
 }
 
 func (q *Queries) UpdatePet(ctx context.Context, arg UpdatePetParams) error {
-	_, err := q.db.ExecContext(ctx, updatePet,
+	_, err := q.db.Exec(ctx, updatePet,
 		arg.OwnerID,
 		arg.Code,
 		arg.Name,

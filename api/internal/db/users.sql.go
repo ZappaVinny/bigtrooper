@@ -7,29 +7,28 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (first_name, last_name, email, phone_number, password_hash) 
-VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email, phone_number, password_hash, preferences, admin, created_at, updated_at
+INSERT INTO users (first_name, last_name, email, phone_number, password) 
+VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email, phone_number, password, preferences, admin, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	Email        string `json:"email"`
-	PhoneNumber  string `json:"phone_number"`
-	PasswordHash string `json:"password_hash"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Password    string `json:"password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
 		arg.PhoneNumber,
-		arg.PasswordHash,
+		arg.Password,
 	)
 	var i User
 	err := row.Scan(
@@ -38,7 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.LastName,
 		&i.Email,
 		&i.PhoneNumber,
-		&i.PasswordHash,
+		&i.Password,
 		&i.Preferences,
 		&i.Admin,
 		&i.CreatedAt,
@@ -52,16 +51,16 @@ DELETE FROM users WHERE id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, email, phone_number, password_hash, preferences, admin, created_at, updated_at FROM users WHERE email = $1
+SELECT id, first_name, last_name, email, phone_number, password, preferences, admin, created_at, updated_at FROM users WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -69,7 +68,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LastName,
 		&i.Email,
 		&i.PhoneNumber,
-		&i.PasswordHash,
+		&i.Password,
 		&i.Preferences,
 		&i.Admin,
 		&i.CreatedAt,
@@ -79,11 +78,11 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, first_name, last_name, email, phone_number, password_hash, preferences, admin, created_at, updated_at FROM users WHERE id = $1
+SELECT id, first_name, last_name, email, phone_number, password, preferences, admin, created_at, updated_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserById, id)
+	row := q.db.QueryRow(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -91,7 +90,29 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 		&i.LastName,
 		&i.Email,
 		&i.PhoneNumber,
-		&i.PasswordHash,
+		&i.Password,
+		&i.Preferences,
+		&i.Admin,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByPhoneNumber = `-- name: GetUserByPhoneNumber :one
+SELECT id, first_name, last_name, email, phone_number, password, preferences, admin, created_at, updated_at FROM users WHERE phone_number = $1
+`
+
+func (q *Queries) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByPhoneNumber, phoneNumber)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.Password,
 		&i.Preferences,
 		&i.Admin,
 		&i.CreatedAt,
@@ -101,27 +122,27 @@ func (q *Queries) GetUserById(ctx context.Context, id int32) (User, error) {
 }
 
 const updateUser = `-- name: UpdateUser :exec
-UPDATE users SET first_name = $1, last_name = $2, email = $3, phone_number = $4, password_hash = $5, preferences = $6, admin = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8
+UPDATE users SET first_name = $1, last_name = $2, email = $3, phone_number = $4, password = $5, preferences = $6, admin = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8
 `
 
 type UpdateUserParams struct {
-	FirstName    string          `json:"first_name"`
-	LastName     string          `json:"last_name"`
-	Email        string          `json:"email"`
-	PhoneNumber  string          `json:"phone_number"`
-	PasswordHash string          `json:"password_hash"`
-	Preferences  json.RawMessage `json:"preferences"`
-	Admin        bool            `json:"admin"`
-	ID           int32           `json:"id"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	Password    string `json:"password"`
+	Preferences []byte `json:"preferences"`
+	Admin       bool   `json:"admin"`
+	ID          int32  `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
+	_, err := q.db.Exec(ctx, updateUser,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
 		arg.PhoneNumber,
-		arg.PasswordHash,
+		arg.Password,
 		arg.Preferences,
 		arg.Admin,
 		arg.ID,

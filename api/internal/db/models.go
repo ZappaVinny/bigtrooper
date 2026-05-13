@@ -5,31 +5,30 @@
 package db
 
 import (
-	"database/sql"
-	"encoding/json"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Pet struct {
-	ID          int32        `json:"id"`
-	OwnerID     int32        `json:"owner_id"`
-	Code        string       `json:"code"`
-	Name        string       `json:"name"`
-	Type        string       `json:"type"`
-	Age         int32        `json:"age"`
-	Description string       `json:"description"`
-	CreatedAt   sql.NullTime `json:"created_at"`
-	UpdatedAt   sql.NullTime `json:"updated_at"`
+	ID          int32              `json:"id"`
+	OwnerID     int32              `json:"owner_id"`
+	Code        string             `json:"code"`
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Age         int32              `json:"age"`
+	Description string             `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {
-	ID           int32           `json:"id"`
-	FirstName    string          `json:"first_name"`
-	LastName     string          `json:"last_name"`
-	Email        string          `json:"email"`
-	PhoneNumber  string          `json:"phone_number"`
-	PasswordHash string          `json:"password_hash"`
-	Preferences  json.RawMessage `json:"preferences"`
-	Admin        bool            `json:"admin"`
-	CreatedAt    sql.NullTime    `json:"created_at"`
-	UpdatedAt    sql.NullTime    `json:"updated_at"`
+	ID          int32              `json:"id"`
+	FirstName   string             `json:"first_name"`
+	LastName    string             `json:"last_name"`
+	Email       string             `json:"email"`
+	PhoneNumber string             `json:"phone_number"`
+	Password    string             `json:"password"`
+	Preferences []byte             `json:"preferences"`
+	Admin       bool               `json:"admin"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
