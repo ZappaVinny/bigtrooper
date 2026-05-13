@@ -20,6 +20,15 @@ type Pet struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Session struct {
+	ID        int32              `json:"id"`
+	UserID    int32              `json:"user_id"`
+	Token     string             `json:"token"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type User struct {
 	ID          int32              `json:"id"`
 	FirstName   string             `json:"first_name"`
