@@ -31,8 +31,7 @@ func main() {
 	optional := r.Group("/")
 	optional.Use(handlers.OptionalAuth(queries))
 	{
-		// optional.GET("/pets", handlers.GetPets(queries))
-		// optional.GET("/profile/:id", handlers.GetPublicProfile(queries))
+
 	}
 
 	protected := r.Group("/")
@@ -40,14 +39,14 @@ func main() {
 	{
 		protected.GET("/logout", handlers.Logout(queries))
 		protected.GET("/me", handlers.Me(queries))
+		protected.PATCH("/me", handlers.UpdateMe(queries))
+
+		protected.GET("/pets", handlers.ListPets(queries))
+		protected.POST("/pets/create", handlers.CreatePet(queries))
+		protected.GET("/pets/:id", handlers.GetPet(queries))
+		protected.PATCH("/pets/:id", handlers.UpdatePet(queries))
+		protected.DELETE("/pets/:id", handlers.DeletePet(queries))
 	}
-
-	// r.GET("/ping", handlers.Status)
-	// r.GET("/logout", handlers.Logout) //wip
-
-	// r.POST("/login", handlers.Login(queries))
-	// r.POST("/signup", handlers.Signup(queries))
-
 	log.Fatal(r.Run("localhost:8080"))
 }
 

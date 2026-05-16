@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const codeExists = `-- name: CodeExists :one
+SELECT EXISTS(SELECT 1 FROM pets WHERE code = $1)
+`
+
+func (q *Queries) CodeExists(ctx context.Context, code string) (bool, error) {
+	row := q.db.QueryRow(ctx, codeExists, code)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createPet = `-- name: CreatePet :one
 INSERT INTO pets (owner_id, code, name, type, age, description) 
 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, owner_id, code, name, type, age, description, created_at, updated_at
@@ -96,6 +107,44 @@ func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listPets = `-- name: ListPets :many
+SELECT id, name, type, age, description FROM pets WHERE owner_id = $1
+`
+
+type ListPetsRow struct {
+	ID          int32  `json:"id"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Age         int32  `json:"age"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, error) {
+	rows, err := q.db.Query(ctx, listPets, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPetsRow
+	for rows.Next() {
+		var i ListPetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.Age,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updatePet = `-- name: UpdatePet :exec

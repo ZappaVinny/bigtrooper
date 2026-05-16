@@ -15,6 +15,27 @@ type LoginRequest struct {
 	PhoneNumber string `json:"phone_number" binding:"required_without=Email,omitempty"`
 	Password    string `json:"password"     binding:"required,min=8"`
 }
+type CreatePetRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Type        string `json:"type" binding:"required"`
+	Age         int32  `json:"age" binding:"required"`
+	Description string `json:"description"`
+}
+
+type UpdatePetRequest struct {
+	Name        *string `json:"name"`
+	Type        *string `json:"type"`
+	Age         *int32  `json:"age"`
+	Description *string `json:"description"`
+}
+
+type UpdateMeRequest struct {
+	FirstName   *string `json:"first_name"`
+	LastName    *string `json:"last_name"`
+	Email       *string `json:"email"        binding:"omitempty,email"`
+	PhoneNumber *string `json:"phone_number"`
+	Password    *string `json:"password"     binding:"omitempty,min=8"`
+}
 
 // Response objects
 
