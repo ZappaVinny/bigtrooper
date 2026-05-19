@@ -9,9 +9,9 @@ backend/tmp/
 backend/*.exe
 
 # Node / React
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
+web/node_modules/
+web/dist/
+web/.vite/
 
 # Editor
 .vscode/
