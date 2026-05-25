@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "../api/client";
 
 export default function Login() {
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     apiFetch("/ping")
