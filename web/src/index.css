@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+@theme {
+  /* Primary brand colors */
+  --color-trooper-black: #1A1614;
+  --color-trooper-tan: #C9A572;
+  --color-trooper-amber: #B8651E;
+
+  /* Supporting colors */
+  --color-cream: #F5EBD9;
+  --color-ear-pink: #E8B5A0;
+  --color-charcoal: #3D3733;
+
+  /* Functional colors */
+  --color-success: #7A9968;
+  --color-warning: #D89B3C;
+  --color-danger: #C25A4F;
+
+  /* Fonts */
+  --font-display: "DM Serif Display", serif;
+  --font-sans: Nunito, system-ui, sans-serif;
+}
+
+body {
+  font-family: "DM Serif Display", serif;
+}
+
+p {
+  font-family: Nunito, system-ui, sans-serif;
+}
