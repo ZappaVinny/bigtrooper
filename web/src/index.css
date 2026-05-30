@@ -2,19 +2,19 @@
 
 @theme {
   /* Primary brand colors */
-  --color-trooper-black: #1A1614;
-  --color-trooper-tan: #C9A572;
-  --color-trooper-amber: #B8651E;
+  --color-trooper-black: #1a1614;
+  --color-trooper-tan: #c9a572;
+  --color-trooper-amber: #b8651e;
 
   /* Supporting colors */
-  --color-cream: #F5EBD9;
-  --color-ear-pink: #E8B5A0;
-  --color-charcoal: #3D3733;
+  --color-cream: #f5ebd9;
+  --color-ear-pink: #e8b5a0;
+  --color-charcoal: #3d3733;
 
   /* Functional colors */
-  --color-success: #7A9968;
-  --color-warning: #D89B3C;
-  --color-danger: #C25A4F;
+  --color-success: #7a9968;
+  --color-warning: #d89b3c;
+  --color-danger: #c25a4f;
 
   /* Fonts */
   --font-display: "DM Serif Display", serif;
@@ -26,5 +26,9 @@ body {
 }
 
 p {
+  font-family: Nunito, system-ui, sans-serif;
+}
+
+.not-fancy {
   font-family: Nunito, system-ui, sans-serif;
 }

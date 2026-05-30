@@ -17,14 +17,14 @@ export default function FAQSection({
         <h1 className="text-[40px] font-bold text-trooper-black text-center mt-12.5">
           FAQ
         </h1>
-        <div className="flex flex-row w-full h-full items-center justify-center gap-0 px-24">
-          <div className="flex flex-col gap-4 py-6 justify-center h-full w-280 shrink-0">
-            <Card length="w-full" height="h-[235px]" bgcolor="bg-charcoal">
+        <div className="flex flex-row w-full flex-1 items-center justify-center gap-0 px-24">
+          <div className="flex flex-col gap-4 pt-6 pb-20 justify-center h-full w-280 shrink-0">
+            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   What if I don't own a 3D printer?
                 </h2>
-                <p className="text-cream text-[20px] text-center leading-relaxed">
+                <p className="text-cream text-[16px] text-center leading-relaxed">
                   No printer, no problem. The 3D model file we provide works
                   with any online printing service. Sites like Craftcloud,
                   Shapeways, or JLCPCB will print and ship your tag for a few
@@ -35,12 +35,12 @@ export default function FAQSection({
               </div>
             </Card>
 
-            <Card length="w-full" height="h-[235px]" bgcolor="bg-charcoal">
+            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   What happens when someone scans my pet's tag?
                 </h2>
-                <p className="text-cream text-[20px] text-center leading-relaxed">
+                <p className="text-cream text-[16px] text-center leading-relaxed">
                   The scanner is taken to a simple page with your pet's name,
                   photo, and the contact options you chose when setting up your
                   account. They can reach you with one tap, and you'll get a
@@ -51,12 +51,12 @@ export default function FAQSection({
               </div>
             </Card>
 
-            <Card length="w-full" height="h-[235px]" bgcolor="bg-charcoal">
+            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   Is my personal information safe?
                 </h2>
-                <p className="text-cream text-[20px] text-center leading-relaxed">
+                <p className="text-cream text-[16px] text-center leading-relaxed">
                   Your address and full contact details are never shown on the
                   public tag page. A finder only sees what you choose to share,
                   which is typically your pet's name, a photo, and a way to
@@ -70,7 +70,7 @@ export default function FAQSection({
           <img
             src={TrooperStanding}
             alt="Trooper Standing"
-            className="h-184.25 w-auto object-contain shrink-0"
+            className="max-h-[75vh] w-auto object-contain shrink-0"
           />
         </div>
       </div>

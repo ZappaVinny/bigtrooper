@@ -4,7 +4,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home/index";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Register from "./pages/Register/index";
 
 export default function App() {
   return (
