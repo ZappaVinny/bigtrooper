@@ -35,10 +35,13 @@ export default function AttentionSection({
             back.
           </p>
           <ButtonPrimary
-            bgcolor="bg-trooper-black"
-            bordercolor="border-trooper-tan"
-            length="w-64"
-            height="h-12"
+            className="
+              bg-trooper-black
+              border-[3px]
+              border-trooper-tan
+              w-64
+              h-12
+            "
             to="/register"
           >
             <div className="text-trooper-tan">Get Started</div>

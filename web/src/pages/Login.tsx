@@ -16,7 +16,7 @@ export default function Login() {
         <label htmlFor="email" className="text-[24px] text-trooper-black">
           Email/Phone
         </label>
-        <TextInput placeholder="Email or Phone Number" length="w-[400px]" />
+        <TextInput placeholder="Email or Phone Number" className="w-100" />
       </div>
       <div className="flex flex-col items-center">
         <label htmlFor="Password" className="text-[24px] text-trooper-black">
@@ -25,17 +25,20 @@ export default function Login() {
         <TextInput
           placeholder="Password"
           inputType="password"
-          length="w-[400px]"
+          className="w-100"
         />
       </div>
 
       <div className="flex flex-col items-center mt-3">
         <ButtonPrimaryWithIcon
           onClick={() => alert("Login functionality not implemented yet")}
-          height="h-12"
-          length="w-[400px]"
-          bgcolor="bg-trooper-tan"
-          bordercolor="border-trooper-black "
+          className="
+            h-12
+            w-100
+            bg-trooper-tan
+            border-[3px]
+            border-trooper-black
+          "
           icon={PawPrint}
         >
           Log In

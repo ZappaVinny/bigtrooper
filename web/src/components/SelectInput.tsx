@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ChevronDown from "../assets/chevron-down.svg";
+import { cn } from "../lib/cn";
 
 type DropdownOption = {
   label: string;
@@ -11,10 +12,7 @@ type DropdownOption = {
 export default function SelectInput({
   options,
   placeholder = "Select",
-  bgcolor = "bg-cream",
-  bordercolor = "border-trooper-black",
-  height = "h-12",
-  length = "w-72",
+  className,
   icon = ChevronDown,
   value,
   onChange,
@@ -23,10 +21,7 @@ export default function SelectInput({
 }: {
   options: DropdownOption[];
   placeholder?: string;
-  bgcolor?: string;
-  bordercolor?: string;
-  height?: string;
-  length?: string;
+  className?: string;
   icon?: string;
   value?: string;
   onChange?: (value: string) => void;
@@ -49,26 +44,28 @@ export default function SelectInput({
   }
 
   return (
-    <div className={`relative ${length}`}>
+    <div className={cn("relative w-72", className ?? "")}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`
-          ${bgcolor}
-          ${height}
-          ${length}
-          ${bordercolor ? `border ${bordercolor}` : "border-0"}
+        className={cn(
+          `bg-cream
+          h-12
+          w-full
+          border
+          border-trooper-black
           box-border
           flex
           items-center
           justify-between
-          ${open ? "rounded-t-xl" : "rounded-xl"}
           px-3
           text-left
           text-[18px]
           text-trooper-black
-          cursor-pointer
-        `}
+          cursor-pointer`,
+          open ? "rounded-t-xl" : "rounded-xl",
+          className ?? ""
+        )}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
 
@@ -87,18 +84,18 @@ export default function SelectInput({
 
       {open && (
         <div
-          className={`
+          className="
             absolute
             left-0
             top-full
             z-20
-            ${length}
+            w-full
             overflow-hidden
             rounded-b-xl
             border
-            ${bordercolor}
-            ${bgcolor}
-          `}
+            border-trooper-black
+            bg-cream
+          "
         >
           {options.map((option) => (
             <button

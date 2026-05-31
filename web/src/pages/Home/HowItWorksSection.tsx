@@ -22,7 +22,7 @@ export default function HowItWorksSection({
           <Card>
             <div className="flex flex-col items-center p-2.5 h-full">
               <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card bgcolor="bg-trooper-black" length="w-16" height="h-16">
+                <Card className="bg-trooper-black w-16 h-16">
                   <div className="flex flex-col justify-center items-center h-full w-full">
                     <h1 className="text-[40px] font-bold text-cream leading-none">
                       1
@@ -54,7 +54,7 @@ export default function HowItWorksSection({
           <Card>
             <div className="flex flex-col items-center p-2.5 h-full">
               <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card bgcolor="bg-trooper-black" length="w-16" height="h-16">
+                <Card className="bg-trooper-black w-16 h-16">
                   <div className="flex flex-col justify-center items-center h-full w-full">
                     <h1 className="text-[40px] font-bold text-cream leading-none">
                       2
@@ -85,7 +85,7 @@ export default function HowItWorksSection({
           <Card>
             <div className="flex flex-col items-center p-2.5 h-full">
               <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card bgcolor="bg-trooper-black" length="w-16" height="h-16">
+                <Card className="bg-trooper-black w-16 h-16">
                   <div className="flex flex-col justify-center items-center h-full w-full">
                     <h1 className="text-[40px] font-bold text-cream leading-none">
                       3
@@ -117,7 +117,7 @@ export default function HowItWorksSection({
           <Card>
             <div className="flex flex-col items-center p-2.5 h-full">
               <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card bgcolor="bg-trooper-black" length="w-16" height="h-16">
+                <Card className="bg-trooper-black w-16 h-16">
                   <div className="flex flex-col justify-center items-center h-full w-full">
                     <h1 className="text-[40px] font-bold text-cream leading-none">
                       4

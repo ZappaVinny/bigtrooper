@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { cn } from "../lib/cn";
 
-export default function ButtonPrimary({
-  children,
+export default function ButtonIcon({
+  icon,
+  iconAlt = "",
   className,
   to,
   onClick,
 }: {
-  children: React.ReactNode;
+  icon: string;
+  iconAlt?: string;
   className?: string;
   to?: string;
   onClick?: () => void;
@@ -19,16 +21,12 @@ export default function ButtonPrimary({
       onClick={() => { if (to) navigate(to); onClick?.(); }}
       className={cn(
         `flex
-        flex-col
         items-center
         justify-center
-        bg-trooper-tan
         h-10
-        w-32
+        w-10
+        bg-none
         border-0
-        rounded-2xl
-        text-[24px]
-        text-trooper-black
         cursor-pointer
         transition-transform
         duration-100
@@ -36,7 +34,7 @@ export default function ButtonPrimary({
         className ?? ""
       )}
     >
-      {children}
+      <img src={icon} alt={iconAlt} className="h-full w-full" />
     </button>
   );
 }

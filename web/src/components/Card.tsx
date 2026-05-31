@@ -1,16 +1,14 @@
+import { cn } from "../lib/cn";
+
 export default function Card({
   children,
-  bgcolor = "bg-charcoal",
-  length = "w-[300px]",
-  height = "h-[300px]",
+  className,
 }: {
   children?: React.ReactNode;
-  bgcolor?: string;
-  length?: string;
-  height?: string;
+  className?: string;
 }) {
   return (
-    <div className={`rounded-2xl ${bgcolor} ${length} ${height}`}>
+    <div className={cn("rounded-2xl bg-charcoal w-75 h-75", className ?? "")}>
       {children}
     </div>
   );

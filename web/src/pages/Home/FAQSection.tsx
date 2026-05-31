@@ -19,7 +19,7 @@ export default function FAQSection({
         </h1>
         <div className="flex flex-row w-full flex-1 items-center justify-center gap-0 px-24">
           <div className="flex flex-col gap-4 pt-6 pb-20 justify-center h-full w-280 shrink-0">
-            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
+            <Card className="w-full h-48.75 bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   What if I don't own a 3D printer?
@@ -35,7 +35,7 @@ export default function FAQSection({
               </div>
             </Card>
 
-            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
+            <Card className="w-full h-48.75 bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   What happens when someone scans my pet's tag?
@@ -51,7 +51,7 @@ export default function FAQSection({
               </div>
             </Card>
 
-            <Card length="w-full" height="h-[195px]" bgcolor="bg-charcoal">
+            <Card className="w-full h-48.75 bg-charcoal">
               <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
                 <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
                   Is my personal information safe?

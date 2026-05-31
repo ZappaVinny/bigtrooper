@@ -29,13 +29,13 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
           <label htmlFor="first-name" className="text-[24px] text-trooper-black">
             First Name
           </label>
-          <TextInput placeholder="First Name" length="w-[220px]" />
+          <TextInput placeholder="First Name" className="w-55" />
         </div>
         <div className="flex flex-col items-center">
           <label htmlFor="last-name" className="text-[24px] text-trooper-black">
             Last Name
           </label>  
-          <TextInput placeholder="Last Name" length="w-[220px]" />
+          <TextInput placeholder="Last Name" className="w-55" />
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
             Email Notifications
           </label>
           <SelectInput
-            length="w-[220px]"
+            className="w-55"
             value={emailNotification}
             onChange={setEmailNotification}
             placeholder="Select"
@@ -60,7 +60,7 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
             Phone Notifications
           </label>
           <SelectInput
-            length="w-[220px]"
+            className="w-55"
             value={phoneNotification}
             onChange={setPhoneNotification}
             placeholder="Select"
@@ -74,10 +74,13 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
       <div className="flex flex-col items-center mt-3">
         <ButtonPrimaryWithIcon
           onClick={onSubmit}
-          height="h-12"
-          length="w-[400px]"
-          bgcolor="bg-trooper-tan"
-          bordercolor="border-trooper-black"
+          className="
+            h-12
+            w-100
+            bg-trooper-tan
+            border-[3px]
+            border-trooper-black
+          "
           icon={PawPrint}
         >
           Create Account

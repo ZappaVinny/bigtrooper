@@ -5,10 +5,7 @@ export default function ButtonPrimaryWithIcon({
   icon,
   iconAlt = "",
   iconPosition = "right",
-  bgcolor = "bg-trooper-tan",
-  bordercolor,
-  height = "h-10",
-  length = "w-32",
+  className,
   to,
   onClick,
 }: {
@@ -16,23 +13,17 @@ export default function ButtonPrimaryWithIcon({
   icon: string;
   iconAlt?: string;
   iconPosition?: "left" | "right";
-  bgcolor?: string;
-  bordercolor?: string;
-  height?: string;
-  length?: string;
+  className?: string;
   to?: string;
   onClick?: () => void;
 }) {
   return (
     <ButtonPrimary
-      bgcolor={bgcolor}
-      bordercolor={bordercolor}
-      height={height}
-      length={length}
+      className={className}
       to={to}
       onClick={onClick}
     >
-      <span className="flex items-center justify-center gap-2">
+      <span className="flex items-center justify-center gap-2 h-full">
         {iconPosition === "left" && (
           <img src={icon} alt={iconAlt} className="h-[1em] w-[1em]" />
         )}

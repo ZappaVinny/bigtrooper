@@ -16,13 +16,13 @@ export default function AccountDetails({ onNext }: { onNext: () => void }) {
         <label htmlFor="email" className="text-[24px] text-trooper-black">
           Email
         </label>
-        <TextInput placeholder="Email" length="w-[400px]" />
+        <TextInput placeholder="Email" className="w-100" />
       </div>
       <div className="flex flex-col items-center">
         <label htmlFor="phone" className="text-[24px] text-trooper-black">
           Phone
         </label>
-        <TextInput placeholder="Phone" length="w-[400px]" />
+        <TextInput placeholder="Phone" className="w-100" />
       </div>
       <div className="flex flex-col items-center">
         <label htmlFor="Password" className="text-[24px] text-trooper-black">
@@ -31,7 +31,7 @@ export default function AccountDetails({ onNext }: { onNext: () => void }) {
         <TextInput
           placeholder="Password"
           inputType="password"
-          length="w-[400px]"
+          className="w-100"
         />
       </div>
       <div className="flex flex-col items-center">
@@ -44,17 +44,20 @@ export default function AccountDetails({ onNext }: { onNext: () => void }) {
         <TextInput
           placeholder="Confirm Password"
           inputType="password"
-          length="w-[400px]"
+          className="w-100"
         />
       </div>
 
       <div className="flex flex-col items-center mt-3">
         <ButtonPrimaryWithIcon
           onClick={onNext}
-          height="h-12"
-          length="w-[400px]"
-          bgcolor="bg-trooper-tan"
-          bordercolor="border-trooper-black "
+          className="
+            h-12
+            w-100
+            bg-trooper-tan
+            border-[3px]
+            border-trooper-black
+          "
           icon={PawPrint}
         >
           Next
