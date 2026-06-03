@@ -8,6 +8,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register/index";
 import Account from "./pages/Account";
 import PetIndex from "./pages/Pets/index";
+import EditPet from "./pages/Pets/EditPet";
+import NewPet from "./pages/Pets/NewPet";
+import News from "./pages/News/index";
 
 import { User } from "./types/auth";
 
@@ -35,6 +38,9 @@ export default function App() {
           {/* Authed Routes */}
           <Route path="/account" element={<Account />} />
           <Route path="/pets" element={<PetIndex />} />
+          <Route path="/pets/new" element={<NewPet />} />
+          <Route path="/pets/:id/edit" element={<EditPet />} />
+          <Route path="/news" element={<News />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -32,3 +32,17 @@ p {
 .not-fancy {
   font-family: Nunito, system-ui, sans-serif;
 }
+
+/* Hide scrollbar */
+html, body {
+  overflow: hidden;
+  height: 100%;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}

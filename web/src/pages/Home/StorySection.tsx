@@ -17,7 +17,7 @@ export default function StorySection({
           About Trooper
         </h1>
         <div className="flex flex-row flex-1 gap-12 pl-36 pr-36 py-6 overflow-hidden items-start">
-          <div className="flex-1 overflow-y-auto text-center text-cream text-[14px] leading-relaxed flex flex-col gap-3 pr-3 pb-28">
+          <div className="flex-1 overflow-y-auto text-center text-cream text-[16px] leading-relaxed flex flex-col gap-3 pr-3 pb-28">
             <p>
               I have grown up with pets my whole life. When I was young, it was
               cats, then dogs were thrown into the mix, and eventually a random

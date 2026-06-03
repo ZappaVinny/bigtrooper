@@ -8,10 +8,14 @@ export default function TextInput({
   className,
   placeholder = "",
   inputType = "text",
+  value,
+  onChange,
 }: {
   className?: string;
   placeholder?: string;
   inputType?: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = inputType === "password";
@@ -22,6 +26,8 @@ export default function TextInput({
       <input
         placeholder={placeholder || "Placeholder"}
         type={resolvedType}
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         className="
           bg-transparent
           h-12
