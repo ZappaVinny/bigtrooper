@@ -24,17 +24,17 @@ func Login(q *db.Queries) gin.HandlerFunc {
 		if err == nil {
 			_, err := q.GetSessionByToken(c, token)
 			if err == nil {
-				c.Redirect(http.StatusFound, "/me")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Already logged in"})
 				return
 			}
 		}
 
 		var user db.User
 
-		if req.Email != "" {
-			user, err = q.GetUserByEmail(c, req.Email)
+		if *req.Identifier.Email != "" {
+			user, err = q.GetUserByEmail(c, *req.Identifier.Email)
 		} else {
-			user, err = q.GetUserByPhoneNumber(c, req.PhoneNumber)
+			user, err = q.GetUserByPhoneNumber(c, *req.Identifier.Phone)
 		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get user"})

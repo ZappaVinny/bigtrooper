@@ -1,9 +1,18 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { handleLogin } from "../auth/authHandler";
+
 import TextInput from "../components/TextInput";
 import ButtonPrimaryWithIcon from "../components/ButtonPrimaryWithIcon";
 
 import PawPrint from "../assets/paw-print.svg";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
   return (
     <div className="flex flex-col h-[calc(100vh-72px)] items-center justify-center gap-3">
       <div className="flex flex-col items-center">
@@ -16,7 +25,12 @@ export default function Login() {
         <label htmlFor="email" className="text-[24px] text-trooper-black">
           Email/Phone
         </label>
-        <TextInput placeholder="Email or Phone Number" className="w-100" />
+        <TextInput
+          placeholder="Email or Phone Number"
+          className="w-100"
+          value={identifier}
+          onChange={setIdentifier}
+        />
       </div>
       <div className="flex flex-col items-center">
         <label htmlFor="Password" className="text-[24px] text-trooper-black">
@@ -26,12 +40,16 @@ export default function Login() {
           placeholder="Password"
           inputType="password"
           className="w-100"
+          value={password}
+          onChange={setPassword}
         />
       </div>
 
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+
       <div className="flex flex-col items-center mt-3">
         <ButtonPrimaryWithIcon
-          onClick={() => alert("Login functionality not implemented yet")}
+          onClick={() => handleLogin(identifier, password, setError, navigate)}
           className="
             h-12
             w-100

@@ -29,20 +29,20 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	public := r.Group("/")
+	public := r.Group("/api/")
 	{
 		public.GET("/ping", handlers.Status)
 		public.POST("/login", handlers.Login(queries))
 		public.POST("/signup", handlers.Signup(queries))
 	}
 
-	optional := r.Group("/")
+	optional := r.Group("/api/")
 	optional.Use(handlers.OptionalAuth(queries))
 	{
 
 	}
 
-	protected := r.Group("/")
+	protected := r.Group("/api/")
 	protected.Use(handlers.AuthRequired(queries))
 	{
 		protected.GET("/logout", handlers.Logout(queries))

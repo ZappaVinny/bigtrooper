@@ -7,9 +7,12 @@ import Bone from "../assets/bone.svg";
 import Profile from "../assets/account.svg";
 import Logout from "../assets/log-out.svg";
 
-import { User } from "../types/auth";
+import { useNavigate } from "react-router-dom";
+import { User } from "../types/api";
+import { handleLogout } from "../auth/authHandler";
 
 export default function Header({ user }: { user?: User | null }) {
+  const navigate = useNavigate();
   const ButtonSection = !user ? (
     <div className="h-full w-full flex flex-row items-center justify-end p-2.5 gap-3.75">
       <ButtonPrimary to="/register" className="bg-trooper-amber">
@@ -27,6 +30,7 @@ export default function Header({ user }: { user?: User | null }) {
         className="bg-transparent border-[3px] border-trooper-tan"
         to="/"
         icon={Logout}
+        onClick={() => handleLogout(navigate)}
       >
         <span className="text-trooper-tan">Logout</span>
       </ButtonPrimaryWithIcon>

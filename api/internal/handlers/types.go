@@ -10,11 +10,15 @@ type SignupRequest struct {
 	Password    string `json:"password"     binding:"required,min=8"`
 }
 
-type LoginRequest struct {
-	Email       string `json:"email"        binding:"required_without=PhoneNumber,omitempty,email"`
-	PhoneNumber string `json:"phone_number" binding:"required_without=Email,omitempty"`
-	Password    string `json:"password"     binding:"required,min=8"`
+type LoginIdentifier struct {
+	Email *string `json:"email,omitempty" binding:"required_without=Phone,omitempty,email"`
+	Phone *string `json:"phone,omitempty" binding:"required_without=Email,omitempty"`
 }
+type LoginRequest struct {
+	Identifier LoginIdentifier `json:"identifier" binding:"required"`
+	Password   string          `json:"password"   binding:"required"`
+}
+
 type CreatePetRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Type        string `json:"type" binding:"required"`
