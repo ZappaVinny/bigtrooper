@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
 	"github.com/gin-gonic/gin"
 )
+
+const bcryptCost = 12
 
 func Login(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -24,20 +27,23 @@ func Login(q *db.Queries) gin.HandlerFunc {
 		if err == nil {
 			_, err := q.GetSessionByToken(c, token)
 			if err == nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Already logged in"})
+				c.JSON(http.StatusConflict, gin.H{"error": "already logged in"})
 				return
 			}
 		}
 
 		var user db.User
 
-		if *req.Identifier.Email != "" {
+		if req.Identifier.Email != nil && *req.Identifier.Email != "" {
 			user, err = q.GetUserByEmail(c, *req.Identifier.Email)
-		} else {
+		} else if req.Identifier.Phone != nil && *req.Identifier.Phone != "" {
 			user, err = q.GetUserByPhoneNumber(c, *req.Identifier.Phone)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email or phone required"})
+			return
 		}
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get user"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
 
@@ -62,6 +68,7 @@ func Login(q *db.Queries) gin.HandlerFunc {
 				Valid: true},
 		})
 
+		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie("session_token", token, 86400*7, "/", "", false, true)
 
 		ResponseUserObject := UserObject{
@@ -74,8 +81,7 @@ func Login(q *db.Queries) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "login Sucessful",
-			"token":   token,
+			"message": "login successful",
 			"user":    ResponseUserObject,
 		})
 
@@ -92,6 +98,7 @@ func Logout(q *db.Queries) gin.HandlerFunc {
 		}
 
 		q.DeleteSession(c, token)
+		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie("session_token", "", -1, "/", "", false, true)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "logout Sucessful",
@@ -107,7 +114,7 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcryptCost)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not hash password"})
 			return
@@ -121,10 +128,8 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 			Password:    string(hash),
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Unable to create user",
-				"type":  err.Error(),
-			})
+			log.Printf("signup: create user failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create user"})
 			return
 		}
 
@@ -219,7 +224,7 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 			updateParams.PhoneNumber = *req.PhoneNumber
 		}
 		if req.Password != nil {
-			hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
+			hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcryptCost)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not hash password"})
 				return

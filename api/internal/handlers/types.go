@@ -3,11 +3,11 @@ package handlers
 // Request validation objects
 
 type SignupRequest struct {
-	FirstName   string `json:"first_name"   binding:"required"`
-	LastName    string `json:"last_name"    binding:"required"`
-	Email       string `json:"email"        binding:"required,email"`
-	PhoneNumber string `json:"phone_number" binding:"required"`
-	Password    string `json:"password"     binding:"required,min=8"`
+	FirstName   string `json:"first_name"   binding:"required,max=100"`
+	LastName    string `json:"last_name"    binding:"required,max=100"`
+	Email       string `json:"email"        binding:"required,email,max=254"`
+	PhoneNumber string `json:"phone_number" binding:"required,max=20"`
+	Password    string `json:"password"     binding:"required,min=8,max=72"`
 }
 
 type LoginIdentifier struct {
@@ -38,7 +38,7 @@ type UpdateMeRequest struct {
 	LastName    *string `json:"last_name"`
 	Email       *string `json:"email"        binding:"omitempty,email"`
 	PhoneNumber *string `json:"phone_number"`
-	Password    *string `json:"password"     binding:"omitempty,min=8"`
+	Password    *string `json:"password"     binding:"omitempty,min=8,max=72"`
 }
 
 // Response objects

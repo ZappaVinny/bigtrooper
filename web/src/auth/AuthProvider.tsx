@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setUser(null);
-    await apiFetch("/logout", { method: "GET" });
+    await apiFetch("/logout", { method: "POST" });
   }, []);
 
   return (
