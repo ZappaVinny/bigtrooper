@@ -13,7 +13,7 @@ export interface LoginRequest {
 export type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginIdentifier & { password: string }) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 

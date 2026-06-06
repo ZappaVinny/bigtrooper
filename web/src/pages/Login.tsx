@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { handleLogin } from "../auth/authHandler";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 import TextInput from "../components/TextInput";
 import ButtonPrimaryWithIcon from "../components/ButtonPrimaryWithIcon";
@@ -8,10 +8,23 @@ import ButtonPrimaryWithIcon from "../components/ButtonPrimaryWithIcon";
 import PawPrint from "../assets/paw-print.svg";
 
 export default function Login() {
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  async function handleLogin() {
+    setError(null);
+    try {
+      await login(identifier, password);
+      const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/";
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-72px)] items-center justify-center gap-3">
@@ -49,7 +62,7 @@ export default function Login() {
 
       <div className="flex flex-col items-center mt-3">
         <ButtonPrimaryWithIcon
-          onClick={() => handleLogin(identifier, password, setError, navigate)}
+          onClick={handleLogin}
           className="
             h-12
             w-100

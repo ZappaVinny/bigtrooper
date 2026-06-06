@@ -8,12 +8,14 @@ import Profile from "../assets/account.svg";
 import Logout from "../assets/log-out.svg";
 
 import { useNavigate } from "react-router-dom";
-import { User } from "../types/api";
-import { handleLogout } from "../auth/authHandler";
+import { useAuth } from "../auth/AuthContext";
 
-export default function Header({ user }: { user?: User | null }) {
+export default function Header() {
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
-  const ButtonSection = !user ? (
+  const ButtonSection = loading ? (
+    <div className="h-full w-full flex flex-row items-center justify-end p-2.5 gap-3.75 invisible" />
+  ) : !user ? (
     <div className="h-full w-full flex flex-row items-center justify-end p-2.5 gap-3.75">
       <ButtonPrimary to="/register" className="bg-trooper-amber">
         Register
@@ -28,9 +30,8 @@ export default function Header({ user }: { user?: User | null }) {
       </ButtonPrimaryWithIcon>
       <ButtonPrimaryWithIcon
         className="bg-transparent border-[3px] border-trooper-tan"
-        to="/"
         icon={Logout}
-        onClick={() => handleLogout(navigate)}
+        onClick={async () => { await logout(); navigate("/"); }}
       >
         <span className="text-trooper-tan">Logout</span>
       </ButtonPrimaryWithIcon>
