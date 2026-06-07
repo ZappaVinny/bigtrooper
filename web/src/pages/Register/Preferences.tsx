@@ -4,11 +4,27 @@ import TextInput from "../../components/TextInput";
 import SelectInput from "../../components/SelectInput";
 
 import PawPrint from "../../assets/paw-print.svg";
+import ButtonPrimary from "../../components/ButtonPrimary";
+import { RegisterRequest, CommunicationPreference } from "../../types/api";
 
-export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
-  const [emailNotification, setEmailNotification] = useState("");
-  const [phoneNotification, setPhoneNotification] = useState("");
-  const [openDropdown, setOpenDropdown] = useState<"email" | "phone" | null>(null);
+export default function Preferences({
+  value,
+  onChange,
+  notifications,
+  onNotificationsChange,
+  onSubmit,
+  onBack,
+}: {
+  value: RegisterRequest;
+  onChange: (patch: Partial<RegisterRequest>) => void;
+  notifications: CommunicationPreference;
+  onNotificationsChange: (patch: Partial<CommunicationPreference>) => void;
+  onSubmit: () => void;
+  onBack: () => void;
+}) {
+  const [openDropdown, setOpenDropdown] = useState<"email" | "phone" | null>(
+    null,
+  );
 
   const notifOptions = [
     { label: "On", value: "on" },
@@ -26,16 +42,29 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
 
       <div className="flex flex-row gap-5">
         <div className="flex flex-col items-center">
-          <label htmlFor="first-name" className="text-[24px] text-trooper-black">
+          <label
+            htmlFor="first-name"
+            className="text-[24px] text-trooper-black"
+          >
             First Name
           </label>
-          <TextInput placeholder="First Name" className="w-55" />
+          <TextInput
+            value={value.first_name}
+            onChange={(v) => onChange({ first_name: v })}
+            placeholder="First Name"
+            className="w-55"
+          />
         </div>
         <div className="flex flex-col items-center">
           <label htmlFor="last-name" className="text-[24px] text-trooper-black">
             Last Name
-          </label>  
-          <TextInput placeholder="Last Name" className="w-55" />
+          </label>
+          <TextInput
+            value={value.last_name}
+            onChange={(v) => onChange({ last_name: v })}
+            placeholder="Last Name"
+            className="w-55"
+          />
         </div>
       </div>
 
@@ -46,8 +75,8 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
           </label>
           <SelectInput
             className="w-55"
-            value={emailNotification}
-            onChange={setEmailNotification}
+            value={notifications.email ? "on" : "off"}
+            onChange={(v) => onNotificationsChange({ email: v === "on" })}
             placeholder="Select"
             options={notifOptions}
             open={openDropdown === "email"}
@@ -61,8 +90,8 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
           </label>
           <SelectInput
             className="w-55"
-            value={phoneNotification}
-            onChange={setPhoneNotification}
+            value={notifications.sms ? "on" : "off"}
+            onChange={(v) => onNotificationsChange({ sms: v === "on" })}
             placeholder="Select"
             options={notifOptions}
             open={openDropdown === "phone"}
@@ -71,16 +100,28 @@ export default function Preferences({ onSubmit }: { onSubmit: () => void }) {
         </div>
       </div>
 
-      <div className="flex flex-col items-center mt-3">
+      <div className="flex flex-row items-center mt-3 gap-5">
+        <ButtonPrimary
+          onClick={onBack}
+          className="
+          h-12
+          w-55
+          bg-trooper-black
+          border-[3px]
+          border-trooper-tan
+          "
+        >
+          <span className="text-trooper-tan">Go Back</span>
+        </ButtonPrimary>
         <ButtonPrimaryWithIcon
           onClick={onSubmit}
           className="
-            h-12
-            w-100
-            bg-trooper-tan
-            border-[3px]
-            border-trooper-black
-          "
+              h-12
+              w-55
+              bg-trooper-tan
+              border-[3px]
+              border-trooper-black
+            "
           icon={PawPrint}
         >
           Create Account

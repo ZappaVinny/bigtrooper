@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -71,13 +72,21 @@ func Login(q *db.Queries) gin.HandlerFunc {
 		c.SetSameSite(http.SameSiteLaxMode)
 		c.SetCookie("session_token", token, 86400*7, "/", "", false, true)
 
+		CommunicationPreference := CommunicationPreference{}
+		err = json.Unmarshal(user.Preferences, &CommunicationPreference)
+		if err != nil {
+			log.Printf("login: failed to unmarshal preferences for user %d: %v", user.ID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to parse user preferences"})
+			return
+		}
+
 		ResponseUserObject := UserObject{
 			ID:          user.ID,
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
 			Email:       user.Email,
 			PhoneNumber: user.PhoneNumber,
-			Preferences: user.Preferences,
+			Preferences: CommunicationPreference,
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -120,12 +129,23 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		user, err := q.CreateUser(c, db.CreateUserParams{
+		var pref CommunicationPreference
+		pref.SMS = req.Preferences.SMS
+		pref.Email = req.Preferences.Email
+
+		prefBytes, err := json.Marshal(pref)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not encode preferences"})
+			return
+		}
+
+		_, err = q.CreateUser(c, db.CreateUserParams{
 			FirstName:   req.FirstName,
 			LastName:    req.LastName,
 			Email:       req.Email,
 			PhoneNumber: req.PhoneNumber,
 			Password:    string(hash),
+			Preferences: prefBytes,
 		})
 		if err != nil {
 			log.Printf("signup: create user failed: %v", err)
@@ -133,16 +153,7 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		ResponseUserObject := UserObject{
-			ID:          user.ID,
-			FirstName:   user.FirstName,
-			LastName:    user.LastName,
-			Email:       user.Email,
-			PhoneNumber: user.PhoneNumber,
-			Preferences: user.Preferences,
-		}
-
-		c.JSON(http.StatusCreated, ResponseUserObject)
+		c.JSON(http.StatusCreated, "signup successful")
 	}
 }
 
@@ -159,13 +170,21 @@ func Me(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
+		communicationPreference := CommunicationPreference{}
+		err = json.Unmarshal(user.Preferences, &communicationPreference)
+		if err != nil {
+			log.Printf("me: failed to unmarshal preferences for user %d: %v", user.ID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to parse user preferences"})
+			return
+		}
+
 		ResponseUserObject := UserObject{
 			ID:          user.ID,
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
 			Email:       user.Email,
 			PhoneNumber: user.PhoneNumber,
-			Preferences: user.Preferences,
+			Preferences: communicationPreference,
 			Admin:       &user.Admin,
 		}
 		c.JSON(http.StatusOK, ResponseUserObject)
@@ -231,9 +250,29 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 			}
 			updateParams.Password = string(hash)
 		}
+		if req.Preferences != nil {
+			pref := CommunicationPreference{
+				SMS:   req.Preferences.SMS,
+				Email: req.Preferences.Email,
+			}
+			prefBytes, err := json.Marshal(pref)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not encode preferences"})
+				return
+			}
+			updateParams.Preferences = prefBytes
+		}
 
 		if err := q.UpdateUser(c, updateParams); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update user"})
+			return
+		}
+
+		communicationPreference := CommunicationPreference{}
+		err = json.Unmarshal(updateParams.Preferences, &communicationPreference)
+		if err != nil {
+			log.Printf("update me: failed to unmarshal preferences for user %d: %v", updateParams.ID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to parse user preferences"})
 			return
 		}
 
@@ -243,7 +282,7 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 			LastName:    updateParams.LastName,
 			Email:       updateParams.Email,
 			PhoneNumber: updateParams.PhoneNumber,
-			Preferences: updateParams.Preferences,
+			Preferences: communicationPreference,
 			Admin:       &updateParams.Admin,
 		})
 	}

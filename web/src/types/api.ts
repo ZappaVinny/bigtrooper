@@ -7,3 +7,17 @@ export type User = {
   preferences: string;
   admin: boolean;
 };
+
+export type CommunicationPreference = {
+  sms: boolean;
+  email: boolean;
+};
+
+export type RegisterRequest = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  password: string;
+  preferences?: CommunicationPreference;
+};

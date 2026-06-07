@@ -1,13 +1,18 @@
 package handlers
 
 // Request validation objects
-
+// {"communication": {"sms": true, "email": true}}
+type CommunicationPreference struct {
+	SMS   bool `json:"sms"`
+	Email bool `json:"email"`
+}
 type SignupRequest struct {
-	FirstName   string `json:"first_name"   binding:"required,max=100"`
-	LastName    string `json:"last_name"    binding:"required,max=100"`
-	Email       string `json:"email"        binding:"required,email,max=254"`
-	PhoneNumber string `json:"phone_number" binding:"required,max=20"`
-	Password    string `json:"password"     binding:"required,min=8,max=72"`
+	FirstName   string                  `json:"first_name"   binding:"required,max=100"`
+	LastName    string                  `json:"last_name"    binding:"required,max=100"`
+	Email       string                  `json:"email"        binding:"required,email,max=254"`
+	PhoneNumber string                  `json:"phone_number" binding:"required,max=20"`
+	Password    string                  `json:"password"     binding:"required,min=8,max=72"`
+	Preferences CommunicationPreference `json:"preferences" binding:"required"`
 }
 
 type LoginIdentifier struct {
@@ -39,16 +44,17 @@ type UpdateMeRequest struct {
 	Email       *string `json:"email"        binding:"omitempty,email"`
 	PhoneNumber *string `json:"phone_number"`
 	Password    *string `json:"password"     binding:"omitempty,min=8,max=72"`
+	Preferences *CommunicationPreference `json:"preferences"`
 }
 
 // Response objects
 
 type UserObject struct {
-	ID          int32  `json:"id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phone_number"`
-	Preferences []byte `json:"preferences"`
-	Admin       *bool  `json:"admin,omitempty"`
+	ID          int32                   `json:"id"`
+	FirstName   string                  `json:"first_name"`
+	LastName    string                  `json:"last_name"`
+	Email       string                  `json:"email"`
+	PhoneNumber string                  `json:"phone_number"`
+	Preferences CommunicationPreference `json:"preferences"`
+	Admin       *bool                   `json:"admin,omitempty"`
 }
