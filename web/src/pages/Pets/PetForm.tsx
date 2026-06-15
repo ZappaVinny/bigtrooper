@@ -4,6 +4,9 @@ import TextInput from "../../components/TextInput";
 import TextArea from "../../components/TextArea";
 import SelectInput from "../../components/SelectInput";
 import ImageUpload from "../../components/ImageUpload";
+import { apiFetch } from "../../api/client";
+import { useNavigate } from "react-router-dom";
+import { PetUpdate } from "../../types/api";
 
 const PET_TYPE_OPTIONS = [
   { label: "Dog", value: "dog" },
@@ -14,8 +17,9 @@ const PET_TYPE_OPTIONS = [
 ];
 
 export type PetFormData = {
+  id: number;
   name: string;
-  age: string;
+  age: number;
   type: string;
   description: string;
   imageUrl?: string;
@@ -28,17 +32,41 @@ export default function PetForm({
   mode: "edit" | "new";
   initialData?: PetFormData;
 }) {
+  const nav = useNavigate();
   const [name, setName] = useState(initialData?.name ?? "");
-  const [age, setAge] = useState(initialData?.age ?? "");
-  const [type, setType] = useState(initialData?.type ?? "");
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [age, setAge] = useState(initialData?.age ?? 0);
+  const [type, setType] = useState(initialData?.type?.toLowerCase() ?? "");
+  const [description, setDescription] = useState(
+    initialData?.description ?? "",
+  );
   const [typeOpen, setTypeOpen] = useState(false);
 
   function handleSubmit() {
-    console.log("Pet form submit:", { name, age, type, description });
+    const patchPet = async (patch: PetUpdate) => {
+      try {
+        const res = await apiFetch("/pets/" + initialData?.id, {
+          method: "PATCH",
+          body: JSON.stringify({ ...patch }),
+        });
+      } catch (err) {
+        if ((err as DOMException).name !== "AbortError") {
+          console.log(err);
+        }
+      }
+    };
+
+    const newPatch: PetUpdate = {
+      name: name,
+      type: type ? type.charAt(0).toUpperCase() + type.slice(1) : type,
+      age: age,
+      description: description
+    };
+
+    patchPet(newPatch);
   }
 
-  const heading = mode === "edit" ? `Edit ${initialData?.name ?? "Pet"}` : "New Pet";
+  const heading =
+    mode === "edit" ? `Edit ${initialData?.name ?? "Pet"}` : "New Pet";
 
   return (
     <div className="flex flex-col items-center py-10 px-6 gap-6 min-h-[calc(100vh-72px)]">
@@ -64,7 +92,9 @@ export default function PetForm({
 
       {/* Information */}
       <div className="flex flex-col items-center gap-1 w-full max-w-3xl">
-        <h2 className="text-[24px] font-bold text-trooper-black self-start">Information</h2>
+        <h2 className="text-[24px] font-bold text-trooper-black self-start">
+          Information
+        </h2>
         <div className="flex flex-row gap-5 w-full">
           <div className="flex flex-col items-center flex-1">
             <label className="text-[20px] text-trooper-black">Pet's Name</label>
@@ -80,8 +110,8 @@ export default function PetForm({
             <TextInput
               placeholder="0"
               inputType="number"
-              value={age}
-              onChange={setAge}
+              value={age.toString()}
+              onChange={(v) => setAge(Number(v))}
               className="w-full"
             />
           </div>
@@ -102,7 +132,9 @@ export default function PetForm({
 
       {/* Description */}
       <div className="flex flex-col gap-1 w-full max-w-3xl">
-        <label className="text-[20px] text-trooper-black text-center">Description of Pet</label>
+        <label className="text-[20px] text-trooper-black text-center">
+          Description of Pet
+        </label>
         <TextArea
           placeholder="Description of this pet..."
           value={description}

@@ -1,15 +1,49 @@
 import { useParams } from "react-router-dom";
 import PetForm from "./PetForm";
 import TrooperSitting from "../../assets/trooper-sitting.png";
+import { useEffect, useState} from "react";
+import { apiFetch } from "../../api/client";
+import { Pet } from "../../types/api";
 
-const STUB_PETS: Record<string, { name: string; age: string; type: string; description: string; imageUrl: string }> = {
-  "1": { name: "Trooper", age: "3", type: "dog", description: "A loyal and energetic golden retriever who loves fetch.", imageUrl: TrooperSitting },
-  "2": { name: "Mittens", age: "5", type: "cat", description: "A calm indoor cat who loves sunbathing.", imageUrl: "" },
-};
 
 export default function EditPet() {
+  const [pet,setPet] = useState<Pet | null>(null)
+  const [loading,setLoading] = useState<boolean>()
+  const [error, setError] = useState<Error | null>()
   const { id } = useParams<{ id: string }>();
-  const pet = id ? STUB_PETS[id] : undefined;
+  
+  useEffect(() => {
+  
+    const loadPet = async () => {
+      try {
+        const res = await apiFetch("/pets/" + id, {
+          method: "GET",
+        });
+        const data: Pet = await res.json();
+        // console.log(data);
+        setPet(data ?? null);
+      } catch (err) {
+        if ((err as DOMException).name !== "AbortError") {
+          setError(err as Error);
+          console.log(err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    setLoading(true);
+    setError(null);
+    loadPet();
+  }, []);
+  
+  if(!pet){
+    return <span> Bad </span>
 
-  return <PetForm mode="edit" initialData={pet} />;
+  }
+  else{
+
+    return <PetForm mode="edit" initialData={pet!} />;
+  }
+
 }

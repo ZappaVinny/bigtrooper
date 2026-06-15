@@ -21,3 +21,31 @@ export type RegisterRequest = {
   password: string;
   preferences?: CommunicationPreference;
 };
+
+export type ListPet = {
+  id: number;
+  name: string;
+  type: string;
+  age: number;
+  description: string;
+};
+
+export type Pet = {
+  id: number;
+  owner_id: number;
+  code: string;
+  name: string;
+  type: string;
+  age: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
+
+
+export type PetUpdate = {
+  name?: string;
+  type?: string;
+  age?: number;
+  description?: string;
+};
