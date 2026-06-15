@@ -5,7 +5,6 @@ import TextArea from "../../components/TextArea";
 import SelectInput from "../../components/SelectInput";
 import ImageUpload from "../../components/ImageUpload";
 import { apiFetch } from "../../api/client";
-import { useNavigate } from "react-router-dom";
 import { PetUpdate } from "../../types/api";
 
 const PET_TYPE_OPTIONS = [
@@ -32,7 +31,6 @@ export default function PetForm({
   mode: "edit" | "new";
   initialData?: PetFormData;
 }) {
-  const nav = useNavigate();
   const [name, setName] = useState(initialData?.name ?? "");
   const [age, setAge] = useState(initialData?.age ?? 0);
   const [type, setType] = useState(initialData?.type?.toLowerCase() ?? "");
