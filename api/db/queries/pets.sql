@@ -1,6 +1,6 @@
 -- name: CreatePet :one
-INSERT INTO pets (owner_id, code, name, type, age, description) 
-VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+INSERT INTO pets (owner_id, code, name, type, age, description, active) 
+VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: GetPetByCode :one
 SELECT * FROM pets WHERE code = $1;
@@ -12,10 +12,10 @@ SELECT * FROM pets WHERE id = $1;
 SELECT EXISTS(SELECT 1 FROM pets WHERE code = $1);
 
 -- name: ListPets :many
-SELECT id, name, type, age, description FROM pets WHERE owner_id = $1;
+SELECT id, name, type, age, description, active FROM pets WHERE owner_id = $1;
 
 -- name: UpdatePet :exec
-UPDATE pets SET owner_id = $1, code = $2, name = $3, type = $4, age = $5, description = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7;
+UPDATE pets SET owner_id = $1, code = $2, name = $3, type = $4, age = $5, description = $6, active = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8;
 
 -- name: DeletePet :exec
 DELETE FROM pets WHERE id = $1;

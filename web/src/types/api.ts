@@ -28,6 +28,7 @@ export type ListPet = {
   type: string;
   age: number;
   description: string;
+  active: boolean;
 };
 
 export type Pet = {
@@ -38,6 +39,7 @@ export type Pet = {
   type: string;
   age: number;
   description: string;
+  active: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -48,4 +50,5 @@ export type PetUpdate = {
   type?: string;
   age?: number;
   description?: string;
+  active?: boolean;
 };

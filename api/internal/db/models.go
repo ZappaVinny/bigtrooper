@@ -16,6 +16,7 @@ type Pet struct {
 	Type        string             `json:"type"`
 	Age         int32              `json:"age"`
 	Description string             `json:"description"`
+	Active      bool               `json:"active"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

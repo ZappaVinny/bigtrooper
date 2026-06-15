@@ -11,6 +11,35 @@ export default function PetIndex() {
   const [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
 
+  async function handleActive(active: boolean, pet_id: number) {
+    const pet = pets.find((p) => p.id === pet_id);
+    if (pet?.active == active) {
+      return;
+    } else {
+      await apiFetch(`/pets/${pet_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active }),
+      });
+      setPets((prev) =>
+        prev.map((p) => (p.id === pet_id ? { ...p, active } : p)),
+      );
+    }
+  }
+
+    async function handleDelete(pet_id: number) {
+      const pet = pets.find((p) => p.id === pet_id);
+      if (!pet) {
+        return;
+      } else {
+        await apiFetch(`/pets/${pet_id}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        setPets((prev) => prev.filter((p) => p.id !== pet_id));
+      }
+    }
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -53,8 +82,12 @@ export default function PetIndex() {
         {pets.map((pet) => (
           <PetCard
             key={pet.id}
+            pet_id={pet.id}
             name={pet.name}
+            active={pet.active}
             onEdit={() => navigate(`/pets/${pet.id}/edit`)}
+            onActiveChange={handleActive}
+            onDelete={handleDelete}
           />
         ))}
         <NewPetCard onClick={() => navigate("/pets/new")} />

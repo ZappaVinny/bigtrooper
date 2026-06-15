@@ -7,6 +7,7 @@ import DefaultPet from "../assets/default-pet.svg";
 export default function PetCard({
   imageUrl,
   name = "Pet Name",
+  pet_id,
   active: initialActive = false,
   onEdit,
   onDelete,
@@ -14,10 +15,11 @@ export default function PetCard({
 }: {
   imageUrl?: string;
   name?: string;
+  pet_id?: number;
   active?: boolean;
   onEdit?: () => void;
-  onDelete?: () => void;
-  onActiveChange?: (active: boolean) => void;
+  onDelete?: (id: number) => void;
+  onActiveChange?: (active: boolean, id: number) => void;
 }) {
   const [active, setActive] = useState(initialActive);
 
@@ -54,7 +56,7 @@ export default function PetCard({
             Edit
           </ButtonPrimary>
           <ButtonPrimary
-            onClick={onDelete}
+            onClick={() => onDelete?.(pet_id!)}
             className="bg-ear-pink text-trooper-black w-24 h-9 text-lg rounded-xl"
           >
             Delete
@@ -63,7 +65,10 @@ export default function PetCard({
         <Toggle
           label="Active"
           checked={active}
-          onChange={(val) => { setActive(val); onActiveChange?.(val); }}
+          onChange={(val) => {
+            setActive(val);
+            onActiveChange?.(val, pet_id!);
+          }}
         />
       </div>
     </Card>

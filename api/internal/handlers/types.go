@@ -36,6 +36,7 @@ type UpdatePetRequest struct {
 	Type        *string `json:"type"`
 	Age         *int32  `json:"age"`
 	Description *string `json:"description"`
+	Active      *bool   `json:"active"`
 }
 
 type UpdateMeRequest struct {

@@ -134,6 +134,10 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 		if req.Description != nil {
 			description = *req.Description
 		}
+		active := existingPet.Active
+		if req.Active != nil {
+			active = *req.Active
+		}
 
 		err = q.UpdatePet(c, db.UpdatePetParams{
 			OwnerID:     existingPet.OwnerID,
@@ -142,6 +146,7 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 			Type:        petType,
 			Age:         age,
 			Description: description,
+			Active:      active,
 			ID:          int32(petID),
 		})
 		if err != nil {

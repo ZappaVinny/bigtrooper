@@ -21,8 +21,8 @@ func (q *Queries) CodeExists(ctx context.Context, code string) (bool, error) {
 }
 
 const createPet = `-- name: CreatePet :one
-INSERT INTO pets (owner_id, code, name, type, age, description) 
-VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, owner_id, code, name, type, age, description, created_at, updated_at
+INSERT INTO pets (owner_id, code, name, type, age, description, active) 
+VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, owner_id, code, name, type, age, description, active, created_at, updated_at
 `
 
 type CreatePetParams struct {
@@ -32,6 +32,7 @@ type CreatePetParams struct {
 	Type        string `json:"type"`
 	Age         int32  `json:"age"`
 	Description string `json:"description"`
+	Active      bool   `json:"active"`
 }
 
 func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, error) {
@@ -42,6 +43,7 @@ func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, erro
 		arg.Type,
 		arg.Age,
 		arg.Description,
+		arg.Active,
 	)
 	var i Pet
 	err := row.Scan(
@@ -52,6 +54,7 @@ func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, erro
 		&i.Type,
 		&i.Age,
 		&i.Description,
+		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -68,7 +71,7 @@ func (q *Queries) DeletePet(ctx context.Context, id int32) error {
 }
 
 const getPetByCode = `-- name: GetPetByCode :one
-SELECT id, owner_id, code, name, type, age, description, created_at, updated_at FROM pets WHERE code = $1
+SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at FROM pets WHERE code = $1
 `
 
 func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
@@ -82,6 +85,7 @@ func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
 		&i.Type,
 		&i.Age,
 		&i.Description,
+		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -89,7 +93,7 @@ func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
 }
 
 const getPetById = `-- name: GetPetById :one
-SELECT id, owner_id, code, name, type, age, description, created_at, updated_at FROM pets WHERE id = $1
+SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at FROM pets WHERE id = $1
 `
 
 func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
@@ -103,6 +107,7 @@ func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
 		&i.Type,
 		&i.Age,
 		&i.Description,
+		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -110,7 +115,7 @@ func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
 }
 
 const listPets = `-- name: ListPets :many
-SELECT id, name, type, age, description FROM pets WHERE owner_id = $1
+SELECT id, name, type, age, description, active FROM pets WHERE owner_id = $1
 `
 
 type ListPetsRow struct {
@@ -119,6 +124,7 @@ type ListPetsRow struct {
 	Type        string `json:"type"`
 	Age         int32  `json:"age"`
 	Description string `json:"description"`
+	Active      bool   `json:"active"`
 }
 
 func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, error) {
@@ -136,6 +142,7 @@ func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, e
 			&i.Type,
 			&i.Age,
 			&i.Description,
+			&i.Active,
 		); err != nil {
 			return nil, err
 		}
@@ -148,7 +155,7 @@ func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, e
 }
 
 const updatePet = `-- name: UpdatePet :exec
-UPDATE pets SET owner_id = $1, code = $2, name = $3, type = $4, age = $5, description = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7
+UPDATE pets SET owner_id = $1, code = $2, name = $3, type = $4, age = $5, description = $6, active = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8
 `
 
 type UpdatePetParams struct {
@@ -158,6 +165,7 @@ type UpdatePetParams struct {
 	Type        string `json:"type"`
 	Age         int32  `json:"age"`
 	Description string `json:"description"`
+	Active      bool   `json:"active"`
 	ID          int32  `json:"id"`
 }
 
@@ -169,6 +177,7 @@ func (q *Queries) UpdatePet(ctx context.Context, arg UpdatePetParams) error {
 		arg.Type,
 		arg.Age,
 		arg.Description,
+		arg.Active,
 		arg.ID,
 	)
 	return err
