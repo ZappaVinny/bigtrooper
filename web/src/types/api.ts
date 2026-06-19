@@ -44,11 +44,18 @@ export type Pet = {
   updated_at: string;
 };
 
-
 export type PetUpdate = {
   name?: string;
   type?: string;
   age?: number;
   description?: string;
   active?: boolean;
+};
+
+export type PetNew = {
+  name: string;
+  type: string;
+  age: number;
+  description: string;
+  active: boolean;
 };

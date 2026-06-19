@@ -5,7 +5,8 @@ import TextArea from "../../components/TextArea";
 import SelectInput from "../../components/SelectInput";
 import ImageUpload from "../../components/ImageUpload";
 import { apiFetch } from "../../api/client";
-import { PetUpdate } from "../../types/api";
+import { PetUpdate, PetNew, Pet } from "../../types/api";
+import { useNavigate } from "react-router-dom";
 
 const PET_TYPE_OPTIONS = [
   { label: "Dog", value: "dog" },
@@ -31,11 +32,14 @@ export default function PetForm({
   mode: "edit" | "new";
   initialData?: PetFormData;
 }) {
-  const [name, setName] = useState(initialData?.name ?? "");
-  const [age, setAge] = useState(initialData?.age ?? 0);
-  const [type, setType] = useState(initialData?.type?.toLowerCase() ?? "");
+  const nav = useNavigate();
+  const [name, setName] = useState(initialData?.name ?? undefined);
+  const [age, setAge] = useState(initialData?.age ?? undefined);
+  const [type, setType] = useState(
+    initialData?.type?.toLowerCase() ?? undefined,
+  );
   const [description, setDescription] = useState(
-    initialData?.description ?? "",
+    initialData?.description ?? undefined,
   );
   const [typeOpen, setTypeOpen] = useState(false);
 
@@ -53,14 +57,45 @@ export default function PetForm({
       }
     };
 
-    const newPatch: PetUpdate = {
-      name: name,
-      type: type ? type.charAt(0).toUpperCase() + type.slice(1) : type,
-      age: age,
-      description: description
+    const createPet = async (pet: PetNew) => {
+      try {
+        const res = await apiFetch("/pets/create", {
+          method: "post",
+          body: JSON.stringify({ ...pet }),
+        });
+        nav(`/pets`);
+      } catch (err) {
+        if ((err as DOMException).name !== "AbortError") {
+          console.log(err);
+        }
+      }
     };
 
-    patchPet(newPatch);
+    const capitalizedType = type
+      ? type.charAt(0).toUpperCase() + type.slice(1)
+      : undefined;
+
+    if (mode === "new") {
+      if (!name || !capitalizedType || age === undefined || !description) {
+        return;
+      }
+      const newPet: PetNew = {
+        name,
+        type: capitalizedType,
+        age,
+        description,
+        active: true,
+      };
+      createPet(newPet);
+    } else {
+      const newPatch: PetUpdate = {
+        name,
+        type: capitalizedType,
+        age,
+        description,
+      };
+      patchPet(newPatch);
+    }
   }
 
   const heading =
@@ -108,7 +143,7 @@ export default function PetForm({
             <TextInput
               placeholder="0"
               inputType="number"
-              value={age.toString()}
+              value={age?.toString()}
               onChange={(v) => setAge(Number(v))}
               className="w-full"
             />
