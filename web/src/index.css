@@ -33,8 +33,20 @@ p {
   font-family: Nunito, system-ui, sans-serif;
 }
 
+a {
+  color: var(--color-trooper-amber);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Hide scrollbar */
-html, body {
+html,
+body {
   overflow: hidden;
   height: 100%;
 }

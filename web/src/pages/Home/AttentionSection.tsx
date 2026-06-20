@@ -1,6 +1,8 @@
 import TrooperSitting from "../../assets/trooper-sitting.png";
 import ButtonPrimary from "../../components/ButtonPrimary";
 
+import { useAuth } from "../../auth/AuthContext";
+
 export default function AttentionSection({
   sectionRef,
   nextRef,
@@ -8,6 +10,9 @@ export default function AttentionSection({
   sectionRef: React.RefObject<HTMLDivElement | null>;
   nextRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const user = useAuth();
+  const route = user ? "/pets" : "/register";
+
   return (
     <section
       ref={sectionRef}
@@ -42,7 +47,7 @@ export default function AttentionSection({
               w-64
               h-12
             "
-            to="/register"
+            to={route}
           >
             <div className="text-trooper-tan">Get Started</div>
           </ButtonPrimary>

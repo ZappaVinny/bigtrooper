@@ -19,7 +19,9 @@ export default function Login() {
     setError(null);
     try {
       await login(identifier, password);
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? "/";
+      const from =
+        (location.state as { from?: { pathname: string } })?.from?.pathname ??
+        "/";
       navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -74,6 +76,9 @@ export default function Login() {
         >
           Log In
         </ButtonPrimaryWithIcon>
+        <a className="mt-3" onClick={(e) => navigate("/register")}>
+          New Here? - Create Account Here
+        </a>
       </div>
     </div>
   );
