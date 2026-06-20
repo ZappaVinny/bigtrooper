@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { cn } from "../lib/cn";
 
-import EyeOpen from "../assets/password-eye-open.svg"
-import EyeClose from "../assets/password-eye-close.svg"
+import EyeOpen from "../assets/password-eye-open.svg";
+import EyeClose from "../assets/password-eye-close.svg";
 
 export default function TextInput({
   className,
@@ -19,7 +19,11 @@ export default function TextInput({
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = inputType === "password";
-  const resolvedType = isPassword ? (showPassword ? "text" : "password") : inputType;
+  const resolvedType = isPassword
+    ? showPassword
+      ? "text"
+      : "password"
+    : inputType;
 
   return (
     <div className={cn("relative w-full", className ?? "")}>

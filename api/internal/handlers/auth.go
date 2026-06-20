@@ -157,6 +157,57 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 	}
 }
 
+func ChangePassword(q *db.Queries) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, ok := c.Get("user_id")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		var req ChangePasswordRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		user, err := q.GetUserById(c, userID.(int32))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get user"})
+			return
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.CurrentPassword)); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			return
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcryptCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not hash password"})
+			return
+		}
+
+		err = q.UpdateUser(c, db.UpdateUserParams{
+			ID:          user.ID,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			Password:    string(hash),
+			Preferences: user.Preferences,
+			Admin:       user.Admin,
+		})
+		if err != nil {
+			log.Printf("change password: update user failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update password"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "password changed"})
+	}
+}
+
 func Me(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("user_id")

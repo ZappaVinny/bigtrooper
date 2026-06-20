@@ -15,6 +15,11 @@ type SignupRequest struct {
 	Preferences CommunicationPreference `json:"preferences" binding:"required"`
 }
 
+type ChangePasswordRequest struct {
+	NewPassword     string `json:"new_password"     binding:"required,min=8,max=72"`
+	CurrentPassword string `json:"current_password"     binding:"required,min=8,max=72"`
+}
+
 type LoginIdentifier struct {
 	Email *string `json:"email,omitempty" binding:"required_without=Phone,omitempty,email"`
 	Phone *string `json:"phone,omitempty" binding:"required_without=Email,omitempty"`
@@ -29,6 +34,7 @@ type CreatePetRequest struct {
 	Type        string `json:"type" binding:"required"`
 	Age         int32  `json:"age" binding:"required"`
 	Description string `json:"description"`
+	Active      bool   `json:"active"`
 }
 
 type UpdatePetRequest struct {
@@ -40,11 +46,11 @@ type UpdatePetRequest struct {
 }
 
 type UpdateMeRequest struct {
-	FirstName   *string `json:"first_name"`
-	LastName    *string `json:"last_name"`
-	Email       *string `json:"email"        binding:"omitempty,email"`
-	PhoneNumber *string `json:"phone_number"`
-	Password    *string `json:"password"     binding:"omitempty,min=8,max=72"`
+	FirstName   *string                  `json:"first_name"`
+	LastName    *string                  `json:"last_name"`
+	Email       *string                  `json:"email"        binding:"omitempty,email"`
+	PhoneNumber *string                  `json:"phone_number"`
+	Password    *string                  `json:"password"     binding:"omitempty,min=8,max=72"`
 	Preferences *CommunicationPreference `json:"preferences"`
 }
 

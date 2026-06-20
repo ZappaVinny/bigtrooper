@@ -60,6 +60,7 @@ func main() {
 		protected.POST("/logout", handlers.Logout(queries))
 		protected.GET("/me", handlers.Me(queries))
 		protected.PATCH("/me", handlers.UpdateMe(queries))
+		protected.POST("/change-password", handlers.ChangePassword(queries))
 
 		protected.GET("/pets", handlers.ListPets(queries))
 		protected.POST("/pets/create", handlers.CreatePet(queries))

@@ -49,6 +49,7 @@ func CreatePet(q *db.Queries) gin.HandlerFunc {
 			Type:        req.Type,
 			Age:         req.Age,
 			Description: req.Description,
+			Active:      req.Active,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create pet"})

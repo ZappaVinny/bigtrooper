@@ -4,7 +4,7 @@ export type User = {
   last_name: string;
   email: string;
   phone_number: string;
-  preferences: string;
+  preferences: CommunicationPreference;
   admin: boolean;
 };
 
@@ -20,6 +20,19 @@ export type RegisterRequest = {
   phone_number: string;
   password: string;
   preferences?: CommunicationPreference;
+};
+
+export type UserUpdate = {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone_number?: string;
+  preferences?: CommunicationPreference;
+};
+
+export type ChangePassword = {
+  current_password: string;
+  new_password: string;
 };
 
 export type ListPet = {
