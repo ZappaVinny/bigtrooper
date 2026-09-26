@@ -1,21 +1,28 @@
-// Articles shown at /articles. Everything here is placeholder copy: swap in
-// real articles by editing this list. Each body is a list of blocks; the
-// table of contents is generated from its "h2"/"h3" blocks.
+// Seed data and helpers for articles. Everything here is placeholder copy.
+// The live list is held by ArticlesProvider (and edited from /admin); swap the
+// seed for API data there. Each body is a list of blocks; the table of
+// contents is generated from its "h2"/"h3" blocks.
 
 export type ArticleBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
   | { type: "h3"; text: string };
 
+export type ArticleStatus = "published" | "draft";
+
 export type Article = {
+  id: number;
   slug: string;
   title: string;
   /** ISO date, e.g. "2026-05-12". */
   date: string;
   category: string;
+  status: ArticleStatus;
   excerpt: string;
   body: ArticleBlock[];
 };
+
+export const SEED_CATEGORIES = ["Training", "Guides", "Safety", "Updates"];
 
 const LOREM =
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla condimentum nec nibh eget sodales. In pharetra velit at risus cursus, at interdum purus ornare. Quisque ipsum nibh, tincidunt tincidunt rutrum sit, consequat sed ligula. Maecenas ut neque eget felis semper suscipit. Vivamus commodo viverra risus sed semper. Donec vulputate at magna convallis auctor. Vestibulum at fringilla felis, quis malesuada lorem. Nunc at augue nisl. Pellentesque quis augue non risus eleifend ornare. Curabitur orci metus, mollis dapibus dui sed, sollicitudin viverra sem. Pellentesque eu elit varius, magna eleifend malesuada cursus a eros. Cras sit amet quam in diam rutrum placerat. Sed nibh mauris, dapibus sed tempor ac, malesuada sed risus. Integer quis leo nam sem iaculis scelerisque ut id lectus. In ut elit faucibus lorem blandit laoreet.";
@@ -35,12 +42,14 @@ function placeholderBody(headings: string[]): ArticleBlock[] {
   ];
 }
 
-export const ARTICLES: Article[] = [
+export const SEED_ARTICLES: Article[] = [
   {
+    id: 1,
     slug: "how-to-train-your-dog",
     title: "How to Train Your Dog",
     date: "2026-05-17",
     category: "Training",
+    status: "published",
     excerpt:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla condimentum nec nibh eget sodales, in pharetra velit at risus cursus.",
     body: placeholderBody([
@@ -52,10 +61,12 @@ export const ARTICLES: Article[] = [
     ]),
   },
   {
+    id: 2,
     slug: "printing-your-first-tag",
     title: "Printing Your First Tag",
     date: "2026-05-12",
     category: "Guides",
+    status: "published",
     excerpt:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi fringilla sem id lacinia aliquam, pellentesque volutpat mi vitae elit.",
     body: placeholderBody([
@@ -66,10 +77,12 @@ export const ARTICLES: Article[] = [
     ]),
   },
   {
+    id: 3,
     slug: "if-your-pet-goes-missing",
     title: "If Your Pet Goes Missing",
     date: "2026-05-08",
     category: "Safety",
+    status: "draft",
     excerpt:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ipsum nibh, tincidunt tincidunt rutrum sit, consequat sed ligula.",
     body: placeholderBody([
@@ -80,10 +93,12 @@ export const ARTICLES: Article[] = [
     ]),
   },
   {
+    id: 4,
     slug: "welcome-to-bigtrooper",
     title: "Welcome to BigTrooper",
     date: "2026-05-01",
     category: "Updates",
+    status: "published",
     excerpt:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ut neque eget felis semper suscipit, vivamus commodo viverra risus.",
     body: placeholderBody(["Why we built it", "What's next"]),
@@ -91,10 +106,31 @@ export const ARTICLES: Article[] = [
 ];
 
 /** Newest first. */
-export const SORTED_ARTICLES = [...ARTICLES].sort((a, b) => b.date.localeCompare(a.date));
+export function sortNewest(articles: Article[]) {
+  return [...articles].sort((a, b) => b.date.localeCompare(a.date));
+}
 
-export function getArticle(slug: string | undefined) {
-  return ARTICLES.find((a) => a.slug === slug);
+/**
+ * Plain-text editing format used by the admin editor until a WYSIWYG editor
+ * lands: blank lines separate blocks, "## " starts a section heading and
+ * "### " a sub-heading.
+ */
+export function bodyToText(body: ArticleBlock[]) {
+  return body
+    .map((b) => (b.type === "h2" ? `## ${b.text}` : b.type === "h3" ? `### ${b.text}` : b.text))
+    .join("\n\n");
+}
+
+export function textToBody(text: string): ArticleBlock[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk): ArticleBlock => {
+      if (chunk.startsWith("### ")) return { type: "h3", text: chunk.slice(4).trim() };
+      if (chunk.startsWith("## ")) return { type: "h2", text: chunk.slice(3).trim() };
+      return { type: "p", text: chunk.replace(/\s*\n\s*/g, " ") };
+    });
 }
 
 export function slugify(text: string) {
@@ -114,7 +150,7 @@ export function formatDate(iso: string) {
   });
 }
 
-export function readingMinutes(article: Article) {
+export function readingMinutes(article: Pick<Article, "body">) {
   const words = article.body.reduce((n, b) => n + b.text.split(/\s+/).length, 0);
   return Math.max(1, Math.round(words / 220));
 }

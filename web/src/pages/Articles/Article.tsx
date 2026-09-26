@@ -6,16 +6,18 @@ import ArticleCard from "../../components/ArticleCard";
 import TableOfContents from "../../components/TableOfContents";
 import { ArrowLeftIcon } from "../../components/icons";
 import {
-  SORTED_ARTICLES,
   formatDate,
-  getArticle,
   getHeadings,
   readingMinutes,
+  sortNewest,
 } from "../../content/articles";
+import { useArticles } from "../../content/ArticlesContext";
 
 export default function ArticlePage() {
   const { slug } = useParams<{ slug: string }>();
-  const article = getArticle(slug);
+  const { articles } = useArticles();
+  const published = articles.filter((a) => a.status === "published");
+  const article = published.find((a) => a.slug === slug);
 
   if (!article) {
     return (
@@ -32,7 +34,7 @@ export default function ArticlePage() {
 
   const headings = getHeadings(article.body);
   let headingIndex = 0;
-  const more = SORTED_ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3);
+  const more = sortNewest(published.filter((a) => a.id !== article.id)).slice(0, 3);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-8 md:py-14">
@@ -109,7 +111,7 @@ export default function ArticlePage() {
           </div>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {more.map((a) => (
-              <ArticleCard key={a.slug} article={a} />
+              <ArticleCard key={a.id} article={a} />
             ))}
           </div>
         </section>

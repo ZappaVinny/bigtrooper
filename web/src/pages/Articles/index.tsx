@@ -1,17 +1,17 @@
 import { useState } from "react";
 import PageShell from "../../components/PageShell";
 import ArticleCard from "../../components/ArticleCard";
-import { SORTED_ARTICLES } from "../../content/articles";
+import { sortNewest } from "../../content/articles";
+import { useArticles } from "../../content/ArticlesContext";
 import { cn } from "../../lib/cn";
 
-const CATEGORIES = ["All", ...new Set(SORTED_ARTICLES.map((a) => a.category))];
-
 export default function ArticleIndex() {
+  const { articles: all } = useArticles();
+  const published = sortNewest(all.filter((a) => a.status === "published"));
+  const categories = ["All", ...new Set(published.map((a) => a.category))];
   const [category, setCategory] = useState("All");
   const articles =
-    category === "All"
-      ? SORTED_ARTICLES
-      : SORTED_ARTICLES.filter((a) => a.category === category);
+    category === "All" ? published : published.filter((a) => a.category === category);
   const [featured, ...rest] = articles;
 
   return (
@@ -21,7 +21,7 @@ export default function ArticleIndex() {
       width="xl"
     >
       <div className="-mt-2 flex flex-wrap justify-center gap-2" role="group" aria-label="Filter by category">
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <button
             key={c}
             type="button"
@@ -44,7 +44,7 @@ export default function ArticleIndex() {
       {rest.length > 0 && (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {rest.map((a) => (
-            <ArticleCard key={a.slug} article={a} />
+            <ArticleCard key={a.id} article={a} />
           ))}
         </div>
       )}

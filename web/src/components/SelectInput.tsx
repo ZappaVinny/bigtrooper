@@ -1,7 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "../lib/cn";
 import { useDismiss } from "../lib/useDismiss";
 import { ChevronDownIcon } from "./icons";
+
+const MENU_MAX_HEIGHT = 280;
 
 type DropdownOption = {
   label: string;
@@ -36,7 +39,10 @@ export default function SelectInput({
   "aria-describedby"?: string;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
 
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   function setOpen(next: boolean) {
@@ -44,7 +50,44 @@ export default function SelectInput({
     else setInternalOpen(next);
   }
 
-  useDismiss(rootRef, open, () => setOpen(false));
+  useDismiss([rootRef, menuRef], open, () => setOpen(false));
+
+  // The menu is portaled to <body> with fixed positioning so it floats over
+  // modals and scroll containers instead of being clipped by them. It opens
+  // downward, or upward when there isn't room below.
+  function placeMenu() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const gap = 6;
+    const below = window.innerHeight - rect.bottom - gap;
+    const above = rect.top - gap;
+    const wanted = Math.min(options.length * 40 + 10, MENU_MAX_HEIGHT);
+    const up = below < wanted && above > below;
+    setMenuStyle({
+      left: rect.left,
+      width: rect.width,
+      maxHeight: Math.min(MENU_MAX_HEIGHT, (up ? above : below) - 8),
+      ...(up
+        ? { bottom: window.innerHeight - rect.top + gap }
+        : { top: rect.bottom + gap }),
+    });
+  }
+
+  // Keep the menu attached to its trigger while anything scrolls or resizes.
+  const placeMenuRef = useRef(placeMenu);
+  useEffect(() => {
+    placeMenuRef.current = placeMenu;
+  });
+  useEffect(() => {
+    if (!open) return;
+    const update = () => placeMenuRef.current();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open]);
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -62,7 +105,11 @@ export default function SelectInput({
         aria-expanded={open}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedBy}
-        onClick={() => setOpen(!open)}
+        ref={triggerRef}
+        onClick={() => {
+          if (!open) placeMenu();
+          setOpen(!open);
+        }}
         className={cn(
           "field h-11 flex items-center justify-between text-left cursor-pointer",
           open && "border-trooper-amber",
@@ -84,10 +131,12 @@ export default function SelectInput({
         )}
       </button>
 
-      {open && (
+      {open && createPortal(
         <ul
+          ref={menuRef}
           role="listbox"
-          className="absolute left-0 top-full z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-line bg-cream-50 p-1 shadow-menu"
+          style={menuStyle}
+          className="fixed z-60 overflow-y-auto rounded-xl border border-line bg-cream-50 p-1 shadow-menu"
         >
           {options.map((option) => {
             const selected = option.value === value;
@@ -116,7 +165,8 @@ export default function SelectInput({
               </li>
             );
           })}
-        </ul>
+        </ul>,
+        document.body,
       )}
     </div>
   );

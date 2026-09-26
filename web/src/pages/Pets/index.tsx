@@ -7,6 +7,7 @@ import Button from "../../components/Button";
 import FormMessage from "../../components/FormMessage";
 import PetCard from "../../components/PetCard";
 import NewPetCard from "../../components/NewPetCard";
+import TagModal from "../../components/TagModal";
 import Modal from "../../components/Modal";
 import ModalHeader from "../../components/ModalHeader";
 import ModalBody from "../../components/ModalBody";
@@ -39,6 +40,7 @@ export default function PetIndex() {
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingDelete, setPendingDelete] = useState<ListPet | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [tagPet, setTagPet] = useState<ListPet | null>(null);
 
   useEffect(() => {
     const req = apiFetch("/pets");
@@ -148,6 +150,7 @@ export default function PetIndex() {
             description={pet.description}
             active={pet.active}
             onEdit={() => navigate(`/pets/${pet.id}/edit`)}
+            onTag={() => setTagPet(pet)}
             onActiveChange={(active) => handleActive(pet.id, active)}
             onDelete={() => setPendingDelete(pet)}
           />
@@ -172,6 +175,10 @@ export default function PetIndex() {
     >
       {actionError && <FormMessage>{actionError}</FormMessage>}
       {content}
+
+      {tagPet && (
+        <TagModal petId={tagPet.id} petName={tagPet.name} onClose={() => setTagPet(null)} />
+      )}
 
       {pendingDelete && (
         <Modal onClose={() => setPendingDelete(null)} labelledBy="delete-pet-title">

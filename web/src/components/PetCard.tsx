@@ -1,7 +1,7 @@
 import Card from "./Card";
 import Button from "./Button";
 import Toggle from "./Toggle";
-import { PencilIcon, TrashIcon } from "./icons";
+import { PencilIcon, QrIcon, TrashIcon } from "./icons";
 import { cn } from "../lib/cn";
 import DefaultPet from "../assets/default-pet.svg";
 
@@ -18,6 +18,7 @@ export default function PetCard({
   description,
   active,
   onEdit,
+  onTag,
   onDelete,
   onActiveChange,
 }: {
@@ -28,6 +29,7 @@ export default function PetCard({
   description?: string;
   active: boolean;
   onEdit?: () => void;
+  onTag?: () => void;
   onDelete?: () => void;
   onActiveChange?: (active: boolean) => void;
 }) {
@@ -79,7 +81,15 @@ export default function PetCard({
           onChange={(val) => onActiveChange?.(val)}
           className="w-auto flex-row-reverse gap-2.5"
         />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          <Button
+            size="sm"
+            icon={<QrIcon />}
+            iconPosition="left"
+            onClick={onTag}
+          >
+            Tag
+          </Button>
           <Button
             variant="outline"
             size="sm"
