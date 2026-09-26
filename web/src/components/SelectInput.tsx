@@ -1,6 +1,7 @@
-import { useState } from "react";
-import ChevronDown from "../assets/chevron-down.svg";
+import { useRef, useState } from "react";
 import { cn } from "../lib/cn";
+import { useDismiss } from "../lib/useDismiss";
+import { ChevronDownIcon } from "./icons";
 
 type DropdownOption = {
   label: string;
@@ -13,11 +14,14 @@ export default function SelectInput({
   options,
   placeholder = "Select",
   className,
-  icon = ChevronDown,
+  icon,
   value,
   onChange,
   open: controlledOpen,
   onOpenChange,
+  id,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: {
   options: DropdownOption[];
   placeholder?: string;
@@ -27,14 +31,20 @@ export default function SelectInput({
   onChange?: (value: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  id?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   function setOpen(next: boolean) {
     if (onOpenChange) onOpenChange(next);
     else setInternalOpen(next);
   }
+
+  useDismiss(rootRef, open, () => setOpen(false));
 
   const selectedOption = options.find((option) => option.value === value);
 
@@ -44,98 +54,69 @@ export default function SelectInput({
   }
 
   return (
-    <div className={cn("relative w-72", className ?? "")}>
+    <div ref={rootRef} className={cn("relative w-full", className)}>
       <button
+        id={id}
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
         onClick={() => setOpen(!open)}
         className={cn(
-          `bg-cream
-          h-12
-          w-full
-          border
-          border-trooper-black
-          box-border
-          flex
-          items-center
-          justify-between
-          px-3
-          text-left
-          text-[18px]
-          text-trooper-black
-          cursor-pointer`,
-          open ? "rounded-t-xl" : "rounded-xl",
-          className ?? ""
+          "field h-11 flex items-center justify-between text-left cursor-pointer",
+          open && "border-trooper-amber",
         )}
       >
-        <span>{selectedOption ? selectedOption.label : placeholder}</span>
-
-        <img
-          src={icon}
-          alt=""
-          className={`
-            h-[1.25em]
-            w-[1.25em]
-            transition-transform
-            duration-150
-            ${open ? "rotate-180" : "rotate-0"}
-          `}
-        />
+        <span className={cn(!selectedOption && "text-charcoal/45")}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        {icon ? (
+          <img
+            src={icon}
+            alt=""
+            className={cn("h-5 w-5 opacity-60 transition-transform duration-150", open && "rotate-180")}
+          />
+        ) : (
+          <ChevronDownIcon
+            className={cn("text-charcoal/60 transition-transform duration-150", open && "rotate-180")}
+          />
+        )}
       </button>
 
       {open && (
-        <div
-          className="
-            absolute
-            left-0
-            top-full
-            z-20
-            w-full
-            overflow-hidden
-            rounded-b-xl
-            border
-            border-trooper-black
-            bg-cream
-          "
+        <ul
+          role="listbox"
+          className="absolute left-0 top-full z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-line bg-cream-50 p-1 shadow-menu"
         >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleSelect(option)}
-              className="
-                flex
-                w-full
-                items-center
-                justify-between
-                gap-3
-                px-3
-                py-2
-                text-left
-                text-trooper-black
-                hover:bg-trooper-tan/30
-                cursor-pointer
-              "
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="text-[18px] ">{option.label}</span>
-
-                {option.description && (
-                  <span className="text-[9px] font-normal text-charcoal">
-                    {option.description}
+          {options.map((option) => {
+            const selected = option.value === value;
+            return (
+              <li key={option.value} role="option" aria-selected={selected}>
+                <button
+                  type="button"
+                  onClick={() => handleSelect(option)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-trooper-black cursor-pointer hover:bg-trooper-tan/25",
+                    selected && "bg-trooper-tan/35 font-semibold",
+                  )}
+                >
+                  <span className="flex items-baseline gap-2">
+                    <span>{option.label}</span>
+                    {option.description && (
+                      <span className="text-xs text-charcoal/60">
+                        {option.description}
+                      </span>
+                    )}
                   </span>
-                )}
-              </div>
-
-              {option.icon && (
-                <img
-                  src={option.icon}
-                  alt=""
-                  className="h-[1.25em] w-[1.25em]"
-                />
-              )}
-            </button>
-          ))}
-        </div>
+                  {option.icon && (
+                    <img src={option.icon} alt="" className="h-5 w-5" />
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

@@ -1,99 +1,76 @@
+import { useState } from "react";
 import TrooperStanding from "../../assets/trooper-standing.png";
 import Card from "../../components/Card";
+import ScrollCue from "../../components/ScrollCue";
+import { ChevronDownIcon } from "../../components/icons";
+import { cn } from "../../lib/cn";
 
-export default function FAQSection({
-  sectionRef,
-  topRef,
-}: {
-  sectionRef: React.RefObject<HTMLDivElement | null>;
-  topRef: React.RefObject<HTMLDivElement | null>;
-}) {
+const FAQS = [
+  {
+    q: "What if I don't own a 3D printer?",
+    a: "No printer, no problem. The 3D model file we provide works with any online printing service. Sites like Craftcloud, Shapeways, or JLCPCB will print and ship your tag for a few dollars. If you've got a local library, makerspace, or a friend with a printer, those work too. The file is standard and ready to go.",
+  },
+  {
+    q: "What happens when someone scans my pet's tag?",
+    a: "The scanner is taken to a simple page with your pet's name, photo, and the contact options you chose when setting up your account. They can reach you with one tap, and you'll get a notification the moment the tag is scanned, including the scanner's general location if their phone shares it. No app download required on either end.",
+  },
+  {
+    q: "Is my personal information safe?",
+    a: "Your address and full contact details are never shown on the public tag page. A finder only sees what you choose to share, which is typically your pet's name, a photo, and a way to reach you, whether that's a call, text, or email. You stay in control of what's visible, and you can update or hide information from your dashboard anytime.",
+  },
+];
+
+export default function FAQSection() {
+  // One answer at a time keeps the panel to one screen; tall desktops show all.
+  const [open, setOpen] = useState(0);
+
   return (
     <section
-      ref={sectionRef}
-      className="relative flex flex-col h-[calc(100vh-72px)] w-full snap-start"
+      id="faq"
+      className="relative flex h-[calc(100dvh-var(--header-h))] w-full snap-start flex-col"
     >
-      <div className="flex flex-col h-full w-full">
-        <h1 className="text-[40px] font-bold text-trooper-black text-center mt-12.5">
+      <div className="no-scrollbar mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 pb-16 pt-10 md:px-8 tall:pb-24 tall:pt-16">
+        <h2 className="text-center text-4xl text-trooper-black md:text-5xl">
           FAQ
-        </h1>
-        <div className="flex flex-row w-full flex-1 items-center justify-center gap-0 px-24">
-          <div className="flex flex-col gap-4 pt-6 pb-20 justify-center h-full w-280 shrink-0">
-            <Card className="w-full h-48.75 bg-charcoal">
-              <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
-                <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
-                  What if I don't own a 3D printer?
-                </h2>
-                <p className="text-cream text-[16px] text-center leading-relaxed">
-                  No printer, no problem. The 3D model file we provide works
-                  with any online printing service. Sites like Craftcloud,
-                  Shapeways, or JLCPCB will print and ship your tag for a few
-                  dollars. If you've got a local library, makerspace, or a
-                  friend with a printer, those work too. The file is standard
-                  and ready to go.
-                </p>
-              </div>
-            </Card>
+        </h2>
 
-            <Card className="w-full h-48.75 bg-charcoal">
-              <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
-                <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
-                  What happens when someone scans my pet's tag?
-                </h2>
-                <p className="text-cream text-[16px] text-center leading-relaxed">
-                  The scanner is taken to a simple page with your pet's name,
-                  photo, and the contact options you chose when setting up your
-                  account. They can reach you with one tap, and you'll get a
-                  notification the moment the tag is scanned, including the
-                  scanner's general location if their phone shares it. No app
-                  download required on either end.
-                </p>
-              </div>
-            </Card>
-
-            <Card className="w-full h-48.75 bg-charcoal">
-              <div className="flex flex-col items-center justify-start pt-5 px-8 h-full">
-                <h2 className="text-[26px] text-trooper-amber mb-4 text-center">
-                  Is my personal information safe?
-                </h2>
-                <p className="text-cream text-[16px] text-center leading-relaxed">
-                  Your address and full contact details are never shown on the
-                  public tag page. A finder only sees what you choose to share,
-                  which is typically your pet's name, a photo, and a way to
-                  reach you, whether that's a call, text, or email. You stay in
-                  control of what's visible, and you can update or hide
-                  information from your dashboard anytime.
-                </p>
-              </div>
-            </Card>
-          </div>
+        <div className="mt-6 flex flex-1 items-center justify-center gap-12 tall:mt-10">
+          <dl className="flex w-full max-w-3xl flex-col gap-3 md:gap-4">
+            {FAQS.map((f, i) => (
+              <Card key={f.q} tone="dark" className="border-0 p-5 md:p-7">
+                <dt>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(i)}
+                    aria-expanded={open === i}
+                    className="focus-ring flex w-full items-center justify-between gap-3 rounded-md text-left font-display text-lg text-trooper-tan cursor-pointer md:text-2xl md:tall:pointer-events-none"
+                  >
+                    {f.q}
+                    <ChevronDownIcon
+                      className={cn("shrink-0 text-cream/50 transition-transform md:tall:hidden", open === i && "rotate-180")}
+                    />
+                  </button>
+                </dt>
+                <dd
+                  className={cn(
+                    "mt-2 text-sm leading-relaxed text-cream/75 md:text-[15px] md:tall:block",
+                    open === i ? "block" : "hidden",
+                  )}
+                >
+                  {f.a}
+                </dd>
+              </Card>
+            ))}
+          </dl>
           <img
             src={TrooperStanding}
-            alt="Trooper Standing"
-            className="max-h-[75vh] w-auto object-contain shrink-0"
+            alt="Trooper standing"
+            className="hidden max-h-[65vh] w-auto shrink-0 object-contain lg:block"
           />
         </div>
       </div>
-      <button
-        onClick={() => topRef.current?.scrollIntoView({ behavior: "smooth" })}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center text-trooper-black opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-        aria-label="Scroll to top"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="36"
-          height="36"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 15 12 9 18 15" />
-        </svg>
-        Back to Top
-      </button>
+
+      <ScrollCue label="Back to top" target="top" direction="up" />
     </section>
   );
 }

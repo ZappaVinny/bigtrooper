@@ -46,8 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiFetch("/logout", { method: "POST" });
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const res = await apiFetch("/me");
+    if (res.ok) setUser(await res.json());
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

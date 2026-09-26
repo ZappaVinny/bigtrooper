@@ -1,22 +1,8 @@
-export default function ModalFooter({
-  children,
-}: {
-  children?: React.ReactNode;
-}) {
+import type { ReactNode } from "react";
+
+export default function ModalFooter({ children }: { children?: ReactNode }) {
   return (
-    <div
-      className="
-        flex
-        flex-row
-        items-center
-        justify-end
-        gap-3
-        px-6
-        py-4
-        border-t-[3px]
-        border-trooper-black
-      "
-    >
+    <div className="flex flex-row items-center justify-end gap-3 border-t border-line bg-cream/60 px-6 py-4">
       {children}
     </div>
   );

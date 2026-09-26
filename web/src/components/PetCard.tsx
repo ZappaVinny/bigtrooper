@@ -1,75 +1,105 @@
-import { useState } from "react";
 import Card from "./Card";
-import ButtonPrimary from "./ButtonPrimary";
+import Button from "./Button";
 import Toggle from "./Toggle";
+import { PencilIcon, TrashIcon } from "./icons";
+import { cn } from "../lib/cn";
 import DefaultPet from "../assets/default-pet.svg";
+
+function formatAge(age: number) {
+  if (age < 1) return "Under 1 yr";
+  return `${age} ${age === 1 ? "yr" : "yrs"}`;
+}
 
 export default function PetCard({
   imageUrl,
-  name = "Pet Name",
-  pet_id,
-  active: initialActive = false,
+  name,
+  type,
+  age,
+  description,
+  active,
   onEdit,
   onDelete,
   onActiveChange,
 }: {
   imageUrl?: string;
-  name?: string;
-  pet_id?: number;
-  active?: boolean;
+  name: string;
+  type?: string;
+  age?: number;
+  description?: string;
+  active: boolean;
   onEdit?: () => void;
-  onDelete?: (id: number) => void;
-  onActiveChange?: (active: boolean, id: number) => void;
+  onDelete?: () => void;
+  onActiveChange?: (active: boolean) => void;
 }) {
-  const [active, setActive] = useState(initialActive);
+  const meta = [type, age !== undefined ? formatAge(age) : undefined]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <Card className="bg-trooper-tan w-107.5 h-82.5 border-trooper-black border-2 flex flex-col overflow-hidden">
-      <div className="flex-1 rounded-t-2xl overflow-hidden bg-trooper-tan flex items-center justify-center">
+    <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-menu">
+      <div className="relative aspect-16/10 bg-trooper-tan/30">
         {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
+          <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
         ) : (
-          <img
-            src={DefaultPet}
-            alt="Default pet"
-            className="w-20 h-20 opacity-60"
-          />
+          <div className="grid h-full w-full place-items-center">
+            <img src={DefaultPet} alt="" className="h-16 w-16 opacity-30" />
+          </div>
         )}
-      </div>
-
-      <div className="py-2 text-center">
-        <span className="font-display text-xl font-bold text-trooper-black">
-          {name}
+        <span
+          className={cn(
+            "absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold backdrop-blur",
+            active ? "bg-cream-50/90 text-[#56724a]" : "bg-trooper-black/70 text-cream/80",
+          )}
+        >
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              active ? "bg-success" : "bg-cream/50",
+            )}
+          />
+          {active ? "Tag active" : "Tag paused"}
         </span>
       </div>
 
-      <div className="flex items-center justify-between px-4 pb-4">
-        <div className="flex gap-3">
-          <ButtonPrimary
-            onClick={onEdit}
-            className="bg-trooper-black text-cream w-24 h-9 text-lg rounded-xl"
-          >
-            Edit
-          </ButtonPrimary>
-          <ButtonPrimary
-            onClick={() => onDelete?.(pet_id!)}
-            className="bg-ear-pink text-trooper-black w-24 h-9 text-lg rounded-xl"
-          >
-            Delete
-          </ButtonPrimary>
-        </div>
+      <div className="flex flex-1 flex-col gap-1 p-5">
+        <h3 className="truncate text-2xl text-trooper-black">{name}</h3>
+        {meta && <p className="text-sm font-semibold text-charcoal/60">{meta}</p>}
+        {description && (
+          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-charcoal/75">
+            {description}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3">
         <Toggle
+          labelPosition="side"
           label="Active"
           checked={active}
-          onChange={(val) => {
-            setActive(val);
-            onActiveChange?.(val, pet_id!);
-          }}
+          onChange={(val) => onActiveChange?.(val)}
+          className="w-auto flex-row-reverse gap-2.5"
         />
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            icon={<PencilIcon />}
+            iconPosition="left"
+            onClick={onEdit}
+            className="text-trooper-black"
+          >
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            aria-label={`Delete ${name}`}
+            className="w-9 px-0 text-danger hover:bg-danger/10"
+          >
+            <TrashIcon width={16} height={16} />
+          </Button>
+        </div>
       </div>
     </Card>
   );

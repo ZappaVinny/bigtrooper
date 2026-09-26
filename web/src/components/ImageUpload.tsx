@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { cn } from "../lib/cn";
 import DefaultPet from "../assets/default-pet.svg";
 
@@ -12,7 +12,14 @@ export default function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  // Release the old object URL whenever it's replaced or we unmount.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPreviewUrl(URL.createObjectURL(file));
@@ -24,16 +31,10 @@ export default function ImageUpload({
       type="button"
       onClick={() => inputRef.current?.click()}
       className={cn(
-        `flex flex-col items-center justify-center gap-3
-        border-2 border-dashed border-trooper-black/40
-        rounded-2xl
-        cursor-pointer
-        hover:border-trooper-amber/70
-        hover:bg-trooper-amber/5
-        transition-colors duration-150
-        overflow-hidden
-        w-full h-full`,
-        className ?? ""
+        "focus-ring group flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl cursor-pointer",
+        "border-2 border-dashed border-trooper-black/15 bg-cream/50 transition-colors",
+        "hover:border-trooper-amber/60 hover:bg-trooper-amber/5",
+        className,
       )}
     >
       <input
@@ -44,13 +45,14 @@ export default function ImageUpload({
         onChange={handleFileChange}
       />
       {previewUrl ? (
-        <img src={previewUrl} alt="Selected pet" className="w-full h-full object-cover" />
+        <img src={previewUrl} alt="Selected pet" className="h-full w-full object-cover" />
       ) : (
         <>
-          <img src={DefaultPet} alt="" className="w-12 h-12 opacity-40" />
-          <span className="text-sm font-semibold text-trooper-black/50 not-fancy">
-            Select New Image
+          <img src={DefaultPet} alt="" className="h-10 w-10 opacity-35" />
+          <span className="text-sm font-bold text-charcoal/70 group-hover:text-trooper-amber">
+            Choose a photo
           </span>
+          <span className="text-xs text-charcoal/50">JPG or PNG</span>
         </>
       )}
     </button>

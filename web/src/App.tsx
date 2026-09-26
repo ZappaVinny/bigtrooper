@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RequireAuth } from "./auth/RequireAuth";
 import Layout from "./components/Layout";
@@ -11,7 +11,8 @@ import Account from "./pages/Account";
 import PetIndex from "./pages/Pets/index";
 import EditPet from "./pages/Pets/EditPet";
 import NewPet from "./pages/Pets/NewPet";
-import News from "./pages/News/index";
+import ArticleIndex from "./pages/Articles/index";
+import ArticlePage from "./pages/Articles/Article";
 
 export default function App() {
   return (
@@ -30,7 +31,9 @@ export default function App() {
             <Route path="/pets" element={<RequireAuth><PetIndex /></RequireAuth>} />
             <Route path="/pets/new" element={<RequireAuth><NewPet /></RequireAuth>} />
             <Route path="/pets/:id/edit" element={<RequireAuth><EditPet /></RequireAuth>} />
-            <Route path="/news" element={<News />} />
+            <Route path="/articles" element={<ArticleIndex />} />
+            <Route path="/articles/:slug" element={<ArticlePage />} />
+            <Route path="/news" element={<Navigate to="/articles" replace />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -4,33 +4,54 @@ export default function Toggle({
   checked,
   onChange,
   label,
+  description,
+  labelPosition = "top",
   className,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
+  description?: string;
+  labelPosition?: "top" | "side";
   className?: string;
 }) {
+  const side = labelPosition === "side";
+
   return (
     <label
       className={cn(
-        "flex flex-col items-center gap-0.5 cursor-pointer select-none",
+        "flex cursor-pointer select-none",
+        side
+          ? "w-full flex-row items-center justify-between gap-4"
+          : "flex-col items-center gap-1",
         className,
       )}
     >
       {label && (
-        <span className="text-xs text-trooper-black font-sans font-semibold">{label}</span>
+        <span className="flex flex-col">
+          <span
+            className={cn(
+              "font-semibold text-charcoal",
+              side ? "text-sm" : "text-xs",
+            )}
+          >
+            {label}
+          </span>
+          {description && (
+            <span className="text-xs text-charcoal/60">{description}</span>
+          )}
+        </span>
       )}
-      <div className="relative">
+      <span className="relative inline-flex shrink-0">
         <input
           type="checkbox"
           className="sr-only peer"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <div className="w-11 h-6 rounded-full bg-charcoal peer-checked:bg-trooper-amber transition-colors duration-200" />
-        <div className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5" />
-      </div>
+        <span className="h-6 w-11 rounded-full bg-trooper-black/20 transition-colors duration-200 peer-checked:bg-trooper-amber peer-focus-visible:ring-2 peer-focus-visible:ring-trooper-amber/60 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-cream" />
+        <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-cream-50 shadow-sm transition-transform duration-200 peer-checked:translate-x-5" />
+      </span>
     </label>
   );
 }

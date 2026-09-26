@@ -23,6 +23,8 @@ export default defineConfig([
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      // TypeScript already reports undefined names; this rule misfires on DOM/React types.
+      'no-undef': 'off',
     },
   },
 ])

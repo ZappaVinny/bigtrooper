@@ -1,47 +1,27 @@
+import type { ReactNode } from "react";
+import { CloseIcon } from "./icons";
+
 export default function ModalHeader({
   children,
   onClose,
+  id,
 }: {
-  children?: React.ReactNode;
+  children?: ReactNode;
   onClose: () => void;
+  id?: string;
 }) {
   return (
-    <div
-      className="
-        relative
-        flex
-        items-center
-        justify-center
-        px-6
-        py-4
-        border-b-[3px]
-        border-trooper-black
-      "
-    >
-      <span className="text-[24px] font-bold text-trooper-black">
+    <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-4">
+      <h2 id={id} className="text-2xl text-trooper-black">
         {children}
-      </span>
+      </h2>
       <button
+        type="button"
         onClick={onClose}
-        className="
-          absolute
-          right-6
-          flex
-          items-center
-          justify-center
-          h-8
-          w-8
-          bg-none
-          border-0
-          text-[24px]
-          text-trooper-black
-          cursor-pointer
-          transition-transform
-          duration-100
-          active:scale-95
-        "
+        aria-label="Close"
+        className="focus-ring -mr-2 grid h-9 w-9 place-items-center rounded-full text-charcoal/60 transition-colors hover:bg-trooper-black/5 hover:text-trooper-black cursor-pointer"
       >
-        ✕
+        <CloseIcon />
       </button>
     </div>
   );

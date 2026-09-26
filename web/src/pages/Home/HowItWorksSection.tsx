@@ -1,178 +1,125 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import TrooperRunning from "../../assets/trooper-running.png";
 import Card from "../../components/Card";
+import ScrollCue from "../../components/ScrollCue";
+import { ArrowRightIcon } from "../../components/icons";
+import { useAuth } from "../../auth/AuthContext";
+import { cn } from "../../lib/cn";
 
-export default function HowItWorksSection({
-  sectionRef,
-  nextRef,
-}: {
-  sectionRef: React.RefObject<HTMLDivElement | null>;
-  nextRef: React.RefObject<HTMLDivElement | null>;
-}) {
+type Step = {
+  title: string;
+  body: string;
+  link?: { label: string; to: string };
+  soon?: string;
+};
+
+export default function HowItWorksSection() {
+  const { user } = useAuth();
+  const [activeStep, setActiveStep] = useState(0);
+
+  const steps: Step[] = [
+    {
+      title: "Register",
+      body: "Create your BigTrooper account and choose how you want to be reached, whether by text or email. Setting your preferences up front means that when something does come up, the alert reaches you exactly where you'll see it.",
+      link: user
+        ? { label: "You're all set", to: "/account" }
+        : { label: "Create an account", to: "/register" },
+    },
+    {
+      title: "Add pets",
+      body: "Tell us about your pet. Add their name, a photo, and anything a kind stranger might need to know. Everything you add here is what shows up the moment their tag gets scanned.",
+      link: { label: "Add a pet", to: "/pets/new" },
+    },
+    {
+      title: "Print tag",
+      body: "Download the 3D model for your tag and bring it to life. Print it at home if you've got a 3D printer, or send the file to an online print service. Either way, you'll have a tag ready to clip onto your pet's collar in a day or two.",
+      soon: "Printing guide coming soon",
+    },
+    {
+      title: "Get notified",
+      body: "Pets wander. It happens to the best of them. When yours does, the person who finds them only needs to scan the tag. You'll get notified the moment it's scanned, with their location and a way to get in touch.",
+      link: { label: "Notification settings", to: "/account" },
+    },
+  ];
+
   return (
     <section
-      ref={sectionRef}
-      className="relative flex flex-col h-[calc(100vh-72px)] w-full snap-start bg-trooper-tan"
+      id="how-it-works"
+      className="relative flex h-[calc(100dvh-var(--header-h))] w-full snap-start flex-col bg-trooper-tan"
     >
-      <div className="flex flex-col h-full w-full">
-        <h1 className="text-[40px] font-bold text-trooper-black text-center mt-12.5">
-          How it Works
-        </h1>
-        <div className="flex flex-row justify-center items-center gap-25 mt-19">
-          {/* Step 1 */}
-          <Card>
-            <div className="flex flex-col items-center p-2.5 h-full">
-              <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card className="bg-trooper-black w-16 h-16">
-                  <div className="flex flex-col justify-center items-center h-full w-full">
-                    <h1 className="text-[40px] font-bold text-cream leading-none">
-                      1
-                    </h1>
-                  </div>
-                </Card>
-                <h2 className="text-[32px] text-cream">Register</h2>
-              </div>
-              <p className="text-center text-cream">
-                Create your BigTrooper account and choose how you want to be
-                reached, whether by text or email. Setting your preferences up
-                front means that when something does come up, the alert reaches
-                you exactly where you'll see it.
-              </p>
-              <div className="w-full mt-auto my-2.5 flex flex-row justify-center">
-                <a
-                  href="/register"
-                  className="text-trooper-tan hover:text-trooper-black transition-colors"
-                >
-                  <p className="text-[24px] text-trooper-amber font-bold hover:underline">
-                    Click to Register
-                  </p>
-                </a>
-              </div>
-            </div>
-          </Card>
+      <div className="no-scrollbar mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col overflow-y-auto px-4 pb-20 pt-10 md:px-8 tall:pt-16">
+        {/* Auto margins center the content when the running-dog art is hidden;
+            when it shows, it grows to fill the space instead. */}
+        <h2 className="mt-auto text-center text-4xl text-trooper-black md:text-5xl">
+          How It Works
+        </h2>
 
-          {/* Step 2 */}
-          <Card>
-            <div className="flex flex-col items-center p-2.5 h-full">
-              <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card className="bg-trooper-black w-16 h-16">
-                  <div className="flex flex-col justify-center items-center h-full w-full">
-                    <h1 className="text-[40px] font-bold text-cream leading-none">
-                      2
-                    </h1>
+        <div className="mb-auto">
+          {/* A swipeable row keeps the panel to one screen; wide screens get a grid. */}
+          <ol
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const card = el.firstElementChild as HTMLElement | null;
+              if (card) setActiveStep(Math.round(el.scrollLeft / (card.offsetWidth + 16)));
+            }}
+            className="no-scrollbar -mx-4 mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 md:-mx-8 md:px-8 xl:mx-0 xl:grid xl:grid-cols-4 xl:gap-5 xl:overflow-visible xl:px-0 tall:mt-10"
+          >
+            {steps.map((step, i) => (
+              <li key={step.title} className="w-[85%] shrink-0 snap-center sm:w-[46%] lg:w-[31%] xl:w-auto">
+                <Card tone="dark" className="flex h-full flex-col gap-4 border-0 p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-trooper-amber text-lg font-extrabold text-cream">
+                      {i + 1}
+                    </span>
+                    <h3 className="text-2xl text-cream">{step.title}</h3>
+                  </div>
+                  <p className="text-[15px] leading-relaxed text-cream/75">{step.body}</p>
+                  <div className="mt-auto pt-1">
+                    {step.link ? (
+                      <Link
+                        to={step.link.to}
+                        className="focus-ring group inline-flex items-center gap-1.5 rounded-md text-sm font-bold text-trooper-tan hover:text-cream"
+                      >
+                        {step.link.label}
+                        <ArrowRightIcon
+                          width={16}
+                          height={16}
+                          className="transition-transform group-hover:translate-x-0.5"
+                        />
+                      </Link>
+                    ) : (
+                      <span className="text-sm font-semibold text-cream/40">{step.soon}</span>
+                    )}
                   </div>
                 </Card>
-                <h2 className="text-[32px] text-cream">Add Pets</h2>
-              </div>
-              <p className="text-center text-cream">
-                Tell us about your pet. Add their name, a photo, and anything a
-                kind stranger might need to know. Everything you add here is
-                what shows up the moment their tag gets scanned.
-              </p>
-              <div className="w-full mt-auto my-2.5 flex flex-row justify-center">
-                <a
-                  href="#"
-                  className="text-trooper-tan hover:text-trooper-black transition-colors"
-                >
-                  <p className="text-[24px] text-trooper-amber font-bold hover:underline">
-                    Click to Add a Pet
-                  </p>
-                </a>
-              </div>
-            </div>
-          </Card>
+              </li>
+            ))}
+          </ol>
 
-          {/* Step 3 */}
-          <Card>
-            <div className="flex flex-col items-center p-2.5 h-full">
-              <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card className="bg-trooper-black w-16 h-16">
-                  <div className="flex flex-col justify-center items-center h-full w-full">
-                    <h1 className="text-[40px] font-bold text-cream leading-none">
-                      3
-                    </h1>
-                  </div>
-                </Card>
-                <h2 className="text-[32px] text-cream">Print Tag</h2>
-              </div>
-              <p className="text-center text-cream">
-                Download the 3D model for your tag and bring it to life. Print
-                it at home if you've got a 3D printer, or send the file to an
-                online print service. Either way, you'll have a tag ready to
-                clip onto your pet's collar in a day or two.
-              </p>
-              <div className="w-full mt-auto my-2.5 flex flex-row justify-center">
-                <a
-                  href="#"
-                  className="text-trooper-tan hover:text-trooper-black transition-colors"
-                >
-                  <p className="text-[24px] text-trooper-amber font-bold hover:underline">
-                    How to Print
-                  </p>
-                </a>
-              </div>
-            </div>
-          </Card>
-
-          {/* Step 4 */}
-          <Card>
-            <div className="flex flex-col items-center p-2.5 h-full">
-              <div className="flex flex-row w-full justify-start align-center items-center gap-2.5 mb-2.5">
-                <Card className="bg-trooper-black w-16 h-16">
-                  <div className="flex flex-col justify-center items-center h-full w-full">
-                    <h1 className="text-[40px] font-bold text-cream leading-none">
-                      4
-                    </h1>
-                  </div>
-                </Card>
-                <h2 className="text-[32px] text-cream">Get Notified</h2>
-              </div>
-              <p className="text-center text-cream">
-                Pets wander. It happens to the best of them. When yours does,
-                the person who finds them only needs to scan the tag. You'll get
-                notified the moment it's scanned, with their location and a way
-                to get in touch.
-              </p>
-              <div className="w-full mt-auto my-2.5 flex flex-row justify-center">
-                <a
-                  href="#"
-                  className="text-trooper-tan hover:text-trooper-black transition-colors"
-                >
-                  <p className="text-[24px] text-trooper-amber font-bold hover:underline">
-                    Notifications
-                  </p>
-                </a>
-              </div>
-            </div>
-          </Card>
+          <div className="mt-4 flex justify-center gap-2 xl:hidden" aria-hidden="true">
+            {steps.map((step, i) => (
+              <span
+                key={step.title}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === activeStep ? "w-5 bg-trooper-black" : "w-1.5 bg-trooper-black/25",
+                )}
+              />
+            ))}
+          </div>
         </div>
-        <div className="flex flex-1 justify-center items-end pb-14">
+
+        <div className="hidden flex-1 items-end justify-center pt-6 md:tall:flex">
           <img
             src={TrooperRunning}
-            alt="Trooper Running"
-            className="max-h-[40vh] w-auto object-contain"
+            alt="Trooper running"
+            className="max-h-[26vh] w-auto object-contain"
           />
         </div>
       </div>
-      <button
-        onClick={() => nextRef.current?.scrollIntoView({ behavior: "smooth" })}
-        className="absolute bottom-0 left-0 right-0 w-full h-28 flex flex-col items-center justify-end pb-6 text-trooper-black opacity-60 hover:opacity-100 transition-opacity cursor-pointer animate-bounce"
-        aria-label="Scroll to next section"
-      >
-        Trooper's Story
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="36"
-          height="36"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+
+      <ScrollCue label="Trooper's Story" target="story" />
     </section>
   );
 }

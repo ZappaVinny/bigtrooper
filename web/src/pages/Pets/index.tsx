@@ -1,97 +1,203 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import PageShell from "../../components/PageShell";
+import Card from "../../components/Card";
+import Button from "../../components/Button";
+import FormMessage from "../../components/FormMessage";
 import PetCard from "../../components/PetCard";
 import NewPetCard from "../../components/NewPetCard";
+import Modal from "../../components/Modal";
+import ModalHeader from "../../components/ModalHeader";
+import ModalBody from "../../components/ModalBody";
+import ModalFooter from "../../components/ModalFooter";
+import { PlusIcon } from "../../components/icons";
 import { ListPet } from "../../types/api";
-import { useEffect, useState } from "react";
 import { apiFetch } from "../../api/client";
+import TrooperRunning from "../../assets/trooper-running.png";
+
+const GRID = "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3";
+
+function SkeletonCard() {
+  return (
+    <div className="flex h-full min-h-72 animate-pulse flex-col overflow-hidden rounded-2xl border border-line bg-cream-50">
+      <div className="aspect-16/10 bg-trooper-tan/25" />
+      <div className="flex flex-col gap-2 p-5">
+        <div className="h-6 w-1/2 rounded-full bg-trooper-black/10" />
+        <div className="h-4 w-1/3 rounded-full bg-trooper-black/5" />
+      </div>
+    </div>
+  );
+}
 
 export default function PetIndex() {
-  const [pets, setPets] = useState<ListPet[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
+  const [pets, setPets] = useState<ListPet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState<ListPet | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  async function handleActive(active: boolean, pet_id: number) {
-    const pet = pets.find((p) => p.id === pet_id);
-    if (pet?.active == active) {
-      return;
-    } else {
-      await apiFetch(`/pets/${pet_id}`, {
+  useEffect(() => {
+    const req = apiFetch("/pets");
+    req
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: ListPet[] | null) => setPets(data ?? []))
+      .catch((err) => {
+        if ((err as DOMException).name !== "AbortError") setLoadError(true);
+      })
+      .finally(() => setLoading(false));
+    return () => req.abort();
+  }, [reloadKey]);
+
+  function retry() {
+    setLoading(true);
+    setLoadError(false);
+    setReloadKey((k) => k + 1);
+  }
+
+  async function handleActive(petId: number, active: boolean) {
+    setActionError("");
+    // Update right away, then roll back if the server disagrees.
+    setPets((prev) => prev.map((p) => (p.id === petId ? { ...p, active } : p)));
+    try {
+      const res = await apiFetch(`/pets/${petId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch {
       setPets((prev) =>
-        prev.map((p) => (p.id === pet_id ? { ...p, active } : p)),
+        prev.map((p) => (p.id === petId ? { ...p, active: !active } : p)),
       );
+      setActionError("We couldn't update that tag. Please try again.");
     }
   }
 
-    async function handleDelete(pet_id: number) {
-      const pet = pets.find((p) => p.id === pet_id);
-      if (!pet) {
-        return;
-      } else {
-        await apiFetch(`/pets/${pet_id}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
-        setPets((prev) => prev.filter((p) => p.id !== pet_id));
-      }
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setActionError("");
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/pets/${pendingDelete.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setPets((prev) => prev.filter((p) => p.id !== pendingDelete.id));
+      setPendingDelete(null);
+    } catch {
+      setActionError(`We couldn't delete ${pendingDelete.name}. Please try again.`);
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
     }
+  }
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const activeCount = pets.filter((p) => p.active).length;
+  const subtitle =
+    loading || loadError || pets.length === 0
+      ? "Manage your pets and their QR tags."
+      : `${pets.length} ${pets.length === 1 ? "pet" : "pets"} · ${activeCount} ${activeCount === 1 ? "tag" : "tags"} active`;
 
-    const loadPets = async () => {
-      try {
-        const res = await apiFetch("/pets", {
-          method: "GET",
-          signal: controller.signal,
-        });
-        const data: ListPet[] = await res.json();
-        // console.log(data);
-        setPets(data ?? []);
-      } catch (err) {
-        if ((err as DOMException).name !== "AbortError") {
-          setError(err as Error);
-          // console.log(err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    setLoading(true);
-    setError(null);
-    loadPets();
-
-    return () => controller.abort();
-  }, []);
-  // console.log(pets);
-  return (
-    <div className="flex flex-col h-[calc(100vh-72px)] items-center">
-      <h1 className="text-[40px] font-bold text-trooper-black text-center mt-12.5">
-        Pet Managment
-      </h1>
-      <p className="text-[16px] text-trooper-black">
-        Please Provide additional details
-      </p>
-
-      <div className="grid grid-cols-3 gap-6 mt-4">
+  let content;
+  if (loading) {
+    content = (
+      <div className={GRID}>
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  } else if (loadError) {
+    content = (
+      <Card className="flex flex-col items-center gap-4 p-10 text-center">
+        <p className="text-charcoal/70">We couldn't load your pets.</p>
+        <Button variant="outline" onClick={retry} className="text-trooper-black">
+          Try again
+        </Button>
+      </Card>
+    );
+  } else if (pets.length === 0) {
+    content = (
+      <Card className="flex flex-col items-center gap-5 px-6 py-12 text-center">
+        <img src={TrooperRunning} alt="" className="h-28 w-auto" />
+        <div className="flex flex-col gap-1">
+          <h2 className="text-3xl text-trooper-black">No pets yet</h2>
+          <p className="max-w-sm text-charcoal/70">
+            Add your first pet to create their profile and get a QR tag ready
+            to print.
+          </p>
+        </div>
+        <Button to="/pets/new" size="lg" icon={<PlusIcon />} iconPosition="left">
+          Add your first pet
+        </Button>
+      </Card>
+    );
+  } else {
+    content = (
+      <div className={GRID}>
         {pets.map((pet) => (
           <PetCard
             key={pet.id}
-            pet_id={pet.id}
             name={pet.name}
+            type={pet.type}
+            age={pet.age}
+            description={pet.description}
             active={pet.active}
             onEdit={() => navigate(`/pets/${pet.id}/edit`)}
-            onActiveChange={handleActive}
-            onDelete={handleDelete}
+            onActiveChange={(active) => handleActive(pet.id, active)}
+            onDelete={() => setPendingDelete(pet)}
           />
         ))}
-        <NewPetCard onClick={() => navigate("/pets/new")} />
+        <NewPetCard />
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <PageShell
+      title="Your pets"
+      subtitle={subtitle}
+      width="xl"
+      actions={
+        pets.length > 0 && (
+          <Button to="/pets/new" icon={<PlusIcon />} iconPosition="left">
+            Add a pet
+          </Button>
+        )
+      }
+    >
+      {actionError && <FormMessage>{actionError}</FormMessage>}
+      {content}
+
+      {pendingDelete && (
+        <Modal onClose={() => setPendingDelete(null)} labelledBy="delete-pet-title">
+          <ModalHeader id="delete-pet-title" onClose={() => setPendingDelete(null)}>
+            Delete {pendingDelete.name}?
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-charcoal/80">
+              This permanently removes {pendingDelete.name}'s profile, and their
+              tag will stop working. This can't be undone.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setPendingDelete(null)}
+              className="text-trooper-black"
+            >
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete pet"}
+            </Button>
+          </ModalFooter>
+        </Modal>
+      )}
+    </PageShell>
   );
 }

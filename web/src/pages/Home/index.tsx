@@ -1,21 +1,28 @@
-import { useRef } from "react";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import AttentionSection from "./AttentionSection";
 import HowItWorksSection from "./HowItWorksSection";
 import StorySection from "./StorySection";
 import FAQSection from "./FAQSection";
 
 export default function Home() {
-  const panel1Ref = useRef<HTMLDivElement>(null);
-  const panel2Ref = useRef<HTMLDivElement>(null);
-  const panel3Ref = useRef<HTMLDivElement>(null);
-  const panel4Ref = useRef<HTMLDivElement>(null);
+  const { hash, key } = useLocation();
+
+  // Links like /#faq jump to that panel, and the logo (plain "/") returns to
+  // the top. Keyed on location.key so clicking the same link again still
+  // scrolls, even though the URL hasn't changed.
+  useEffect(() => {
+    document
+      .getElementById(hash ? hash.slice(1) : "top")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }, [hash, key]);
 
   return (
-    <main className="h-[calc(100vh-72px)] overflow-y-scroll snap-y snap-mandatory">
-      <AttentionSection   sectionRef={panel1Ref} nextRef={panel2Ref} />
-      <HowItWorksSection  sectionRef={panel2Ref} nextRef={panel3Ref} />
-      <StorySection       sectionRef={panel3Ref} nextRef={panel4Ref} />
-      <FAQSection         sectionRef={panel4Ref} topRef={panel1Ref}  />
-    </main>
+    <div className="h-[calc(100dvh-var(--header-h))] overflow-y-scroll snap-y snap-mandatory no-scrollbar">
+      <AttentionSection />
+      <HowItWorksSection />
+      <StorySection />
+      <FAQSection />
+    </div>
   );
 }

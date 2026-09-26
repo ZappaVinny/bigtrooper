@@ -1,20 +1,8 @@
-export default function ModalBody({
-  children,
-}: {
-  children?: React.ReactNode;
-}) {
+import type { ReactNode } from "react";
+
+export default function ModalBody({ children }: { children?: ReactNode }) {
   return (
-    <div
-      className="
-        flex
-        flex-col
-        flex-1
-        px-6
-        py-4
-        gap-3
-        text-trooper-black
-      "
-    >
+    <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5 text-trooper-black">
       {children}
     </div>
   );

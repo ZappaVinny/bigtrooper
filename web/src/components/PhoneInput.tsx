@@ -28,17 +28,26 @@ export default function PhoneInput({
   placeholder = "(555) 555-5555",
   value,
   onChange,
+  id,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: {
   className?: string;
   placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
+  id?: string;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
 }) {
   const [display, setDisplay] = useState(() => formatForDisplay(value ?? ""));
 
   return (
-    <div className={cn("relative w-full", className ?? "")}>
+    <div className={cn("relative w-full", className)}>
       <input
+        id={id}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
         placeholder={placeholder}
         type="tel"
         inputMode="tel"
@@ -49,24 +58,7 @@ export default function PhoneInput({
           setDisplay(formatted);
           onChange?.(formatForValue(formatted));
         }}
-        className="
-          bg-transparent
-          h-12
-          w-full
-          border
-          border-trooper-black
-          box-border
-          rounded-xl
-          px-4
-          py-0
-          text-[16px]
-          leading-none
-          text-charcoal
-          placeholder:text-[16px]
-          placeholder:leading-none
-          placeholder:text-charcoal/70
-          outline-none
-        "
+        className="field h-11"
       />
     </div>
   );

@@ -1,17 +1,23 @@
-import { Outlet } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 
-interface LayoutProps {
-  header: React.ReactNode;
-  footer: React.ReactNode;
-}
+export default function Layout({
+  header,
+  footer,
+}: {
+  header: ReactNode;
+  footer: ReactNode;
+}) {
+  // The homepage is a full-height snap scroller, so it has no footer.
+  const isHome = useLocation().pathname === "/";
 
-export default function Layout({ header, footer }: LayoutProps) {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex min-h-dvh flex-col">
       {header}
-      <main className="flex-1 overflow-y-auto bg-cream">
+      <main className="flex-1">
         <Outlet />
       </main>
+      {!isHome && footer}
     </div>
   );
 }
