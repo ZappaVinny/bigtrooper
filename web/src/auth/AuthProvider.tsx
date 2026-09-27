@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiFetch } from "../api/client";
+import { normalizePhone } from "../lib/phone";
 import { type User } from "../types/api";
 import { AuthContext } from "./AuthContext";
 
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (identifier: string, password: string) => {
     const loginIdentifier = identifier.includes("@")
       ? { email: identifier }
-      : { phone: identifier };
+      : { phone: normalizePhone(identifier) };
     const res = await apiFetch("/login", {
       method: "POST",
       body: JSON.stringify({ identifier: loginIdentifier, password }),

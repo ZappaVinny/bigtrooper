@@ -90,7 +90,7 @@ func CreateCategory(q *db.Queries) gin.HandlerFunc {
 			Description: category.Description.String,
 		}
 
-		c.JSON(http.StatusOK, result)
+		c.JSON(http.StatusCreated, result)
 	}
 }
 

@@ -19,8 +19,6 @@ import { PetUpdate, PetNew } from "../../types/api";
 const PET_TYPE_OPTIONS = [
   { label: "Dog", value: "dog" },
   { label: "Cat", value: "cat" },
-  { label: "Bird", value: "bird" },
-  { label: "Rabbit", value: "rabbit" },
   { label: "Other", value: "other" },
 ];
 
@@ -85,7 +83,7 @@ export default function PetForm({
     setPhase("saving");
     let petId = initialData?.id;
     try {
-      const res = await apiFetch(mode === "new" ? "/pets/create" : `/pets/${initialData?.id}`, {
+      const res = await apiFetch(mode === "new" ? "/pets" : `/pets/${initialData?.id}`, {
         method: mode === "new" ? "POST" : "PATCH",
         body: JSON.stringify(body),
       });

@@ -65,12 +65,6 @@ func main() {
 		public.POST("/found/:code/report", handlers.RateLimit(5, 3), handlers.ReportFoundPet(queries))
 	}
 
-	optional := r.Group("/api/")
-	optional.Use(handlers.OptionalAuth(queries))
-	{
-
-	}
-
 	protected := r.Group("/api/")
 	protected.Use(handlers.AuthRequired(queries))
 	{
@@ -80,7 +74,7 @@ func main() {
 		protected.POST("/change-password", handlers.ChangePassword(queries))
 
 		protected.GET("/pets", handlers.ListPets(queries, store))
-		protected.POST("/pets/create", handlers.CreatePet(queries, store))
+		protected.POST("/pets", handlers.CreatePet(queries, store))
 		protected.GET("/pets/:id", handlers.GetPet(queries, store))
 		protected.PATCH("/pets/:id", handlers.UpdatePet(queries))
 		protected.DELETE("/pets/:id", handlers.DeletePet(queries, store))

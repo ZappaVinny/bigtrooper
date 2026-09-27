@@ -61,8 +61,8 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
       setError("Please fill out all fields.");
       return;
     }
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters.");
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -117,7 +117,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               onChange={setCurrentPassword}
             />
           </FormField>
-          <FormField label="New password" hint="At least 6 characters.">
+          <FormField label="New password" hint="At least 8 characters.">
             <TextInput
               inputType="password"
               autoComplete="new-password"

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -59,7 +58,7 @@ func ListAllArticles(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		articles, err := q.ListAllArticles(c.Request.Context())
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to fetch articles"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 			return
 		}
 
@@ -68,7 +67,6 @@ func ListAllArticles(q *db.Queries) gin.HandlerFunc {
 		for _, a := range articles {
 			result = append(result, toListArticleObject(a.ID, a.Title, a.Excerpt, a.Slug, a.Date, a.Published, a.Category))
 		}
-		fmt.Println("Articles fetched:", len(result))
 		c.JSON(http.StatusOK, result)
 	}
 }
@@ -77,7 +75,7 @@ func ListPublishedArticles(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		articles, err := q.ListPublishedArticles(c.Request.Context())
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to fetch articles"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch articles"})
 			return
 		}
 
@@ -86,7 +84,6 @@ func ListPublishedArticles(q *db.Queries) gin.HandlerFunc {
 		for _, a := range articles {
 			result = append(result, toListArticleObject(a.ID, a.Title, a.Excerpt, a.Slug, a.Date, a.Published, a.Category))
 		}
-		fmt.Println("Articles fetched:", len(result))
 		c.JSON(http.StatusOK, result)
 	}
 }
@@ -104,7 +101,7 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := ArticleCreateRequest{}
 		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(400, gin.H{"error": "Invalid request body"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
@@ -112,7 +109,7 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 
 		dt, err := time.Parse("2006-01-02", request.Date)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid date format"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
 			return
 		}
 
@@ -133,7 +130,7 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("CreateArticle: failed to create article: %v", err)
 			if !respondDBError(c, err, "create article") {
-				c.JSON(500, gin.H{"error": "Failed to create article"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create article"})
 			}
 			return
 		}
@@ -141,10 +138,10 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 		fresh, err := q.GetArticleBySlug(c.Request.Context(), article.Slug)
 		if err != nil {
 			log.Printf("CreateArticle: failed to reload article: %v", err)
-			c.JSON(500, gin.H{"error": "Failed to load created article"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load created article"})
 			return
 		}
-		c.JSON(201, toArticleObject(fresh))
+		c.JSON(http.StatusCreated, toArticleObject(fresh))
 	}
 }
 
@@ -164,11 +161,11 @@ func GetAnyArticle(q *db.Queries) gin.HandlerFunc {
 		slug := c.Param("slug")
 		article, err := q.GetArticleBySlug(c.Request.Context(), slug)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Article not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 			return
 		}
 
-		c.JSON(200, toArticleObject(article))
+		c.JSON(http.StatusOK, toArticleObject(article))
 	}
 }
 
@@ -177,7 +174,7 @@ func GetPublishedArticle(q *db.Queries) gin.HandlerFunc {
 		slug := c.Param("slug")
 		article, err := q.GetArticleBySlug(c.Request.Context(), slug)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Article not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 			return
 		}
 
@@ -186,7 +183,7 @@ func GetPublishedArticle(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, toArticleObject(article))
+		c.JSON(http.StatusOK, toArticleObject(article))
 	}
 }
 
@@ -204,13 +201,13 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 		articleSlug := c.Param("slug")
 		existing, err := q.GetArticleBySlug(c.Request.Context(), articleSlug)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Article not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 			return
 		}
 
 		request := ArticleUpdateRequest{}
 		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(400, gin.H{"error": "Invalid request body"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
@@ -235,7 +232,7 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 		if request.Date != nil {
 			dt, err := time.Parse("2006-01-02", *request.Date)
 			if err != nil {
-				c.JSON(400, gin.H{"error": "Invalid date format"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
 				return
 			}
 			updated.Date = pgtype.Date{
@@ -257,7 +254,7 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("UpdateArticle: failed to update article: %v", err)
 			if !respondDBError(c, err, "update article") {
-				c.JSON(500, gin.H{"error": "Failed to update article"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update article"})
 			}
 			return
 		}
@@ -265,10 +262,10 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 		fresh, err := q.GetArticleBySlug(c.Request.Context(), updated.Slug)
 		if err != nil {
 			log.Printf("UpdateArticle: failed to reload article: %v", err)
-			c.JSON(500, gin.H{"error": "Failed to load updated article"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load updated article"})
 			return
 		}
-		c.JSON(200, toArticleObject(fresh))
+		c.JSON(http.StatusOK, toArticleObject(fresh))
 	}
 }
 
@@ -277,17 +274,17 @@ func DeleteArticle(q *db.Queries) gin.HandlerFunc {
 		articleSlug := c.Param("slug")
 		existing, err := q.GetArticleBySlug(c.Request.Context(), articleSlug)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Article not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 			return
 		}
 
 		err = q.DeleteArticle(c.Request.Context(), existing.ID)
 		if err != nil {
 			log.Printf("DeleteArticle: failed to delete article: %v", err)
-			c.JSON(500, gin.H{"error": "Failed to delete article"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete article"})
 			return
 		}
 
-		c.JSON(200, gin.H{"message": "Article deleted successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Article deleted successfully"})
 	}
 }

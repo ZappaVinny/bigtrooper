@@ -15,7 +15,7 @@ function validate(value: RegisterRequest, confirmPassword: string): Errors {
   else if (!/\S+@\S+\.\S+/.test(value.email)) errors.email = "Enter a valid email address.";
   else if (value.email.length > 100) errors.email = "Email must be 100 characters or fewer.";
   if (value.phone_number.length !== 12) errors.phone = "Enter a 10-digit phone number.";
-  if (value.password.length < 6) errors.password = "Password must be at least 6 characters.";
+  if (value.password.length < 8) errors.password = "Password must be at least 8 characters.";
   if (value.password !== confirmPassword) errors.confirm = "Passwords don't match.";
   return errors;
 }
@@ -60,7 +60,7 @@ export default function AccountDetails({
           onChange={(v) => onChange({ phone_number: v })}
         />
       </FormField>
-      <FormField label="Password" hint="At least 6 characters." error={errors.password}>
+      <FormField label="Password" hint="At least 8 characters." error={errors.password}>
         <TextInput
           inputType="password"
           autoComplete="new-password"

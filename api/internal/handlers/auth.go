@@ -120,7 +120,7 @@ func Logout(q *db.Queries) gin.HandlerFunc {
 		q.DeleteSession(c, hashToken(token))
 		setSessionCookie(c, "", -1)
 		c.JSON(http.StatusOK, gin.H{
-			"message": "logout Sucessful",
+			"message": "logout successful",
 		})
 	}
 }
@@ -164,7 +164,7 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, "signup successful")
+		c.JSON(http.StatusCreated, gin.H{"message": "signup successful"})
 	}
 }
 
