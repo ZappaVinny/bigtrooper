@@ -10,3 +10,7 @@ This project is a web app that allows users to make QR code based 3D printable p
 - Go (backend)
 - PostgreSQL (database)
 - Docker (containerization - DB only for now)
+
+## Documentation
+
+- [API reference](API.md): every endpoint, who can call it, and what it expects and returns.

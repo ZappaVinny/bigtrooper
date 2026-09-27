@@ -55,8 +55,8 @@ func main() {
 		public.GET("/up", handlers.Status)
 		public.POST("/login", handlers.Login(queries))
 		public.POST("/signup", handlers.Signup(queries))
-		public.GET("/articles", handlers.ListArticles(queries))
-		public.GET("/articles/:slug", handlers.GetArticle(queries))
+		public.GET("/articles", handlers.ListPublishedArticles(queries))
+		public.GET("/articles/:slug", handlers.GetPublishedArticle(queries))
 	}
 
 	optional := r.Group("/api/")
@@ -95,8 +95,8 @@ func main() {
 		admin.PATCH("/categories/:id", handlers.UpdateCategory(queries))
 		admin.DELETE("/categories/:id", handlers.DeleteCategory(queries))
 
-		admin.GET("/articles", handlers.ListArticles(queries))
-		admin.GET("/articles/:slug", handlers.GetArticle(queries))
+		admin.GET("/articles", handlers.ListAllArticles(queries))
+		admin.GET("/articles/:slug", handlers.GetAnyArticle(queries))
 		admin.POST("/articles", handlers.CreateArticle(queries))
 		admin.PATCH("/articles/:slug", handlers.UpdateArticle(queries))
 		admin.DELETE("/articles/:slug", handlers.DeleteArticle(queries))

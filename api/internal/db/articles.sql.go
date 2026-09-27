@@ -62,13 +62,32 @@ func (q *Queries) DeleteArticle(ctx context.Context, id int32) error {
 	return err
 }
 
-const getArticle = `-- name: GetArticle :one
-SELECT id, slug, title, date, category_id, published, deleted, excerpt, body, created_at, updated_at FROM articles WHERE id = $1 AND deleted = FALSE
+const getArticleById = `-- name: GetArticleById :one
+SELECT a.id, a.slug, a.title, a.date, a.category_id, a.published, a.deleted, a.excerpt, a.body, a.created_at, a.updated_at, c.id, c.name, c.description, c.created_at, c.updated_at
+FROM articles a
+JOIN categories c ON c.id = a.category_id
+WHERE a.deleted = FALSE AND a.id = $1
+ORDER BY a.date DESC
 `
 
-func (q *Queries) GetArticle(ctx context.Context, id int32) (Article, error) {
-	row := q.db.QueryRow(ctx, getArticle, id)
-	var i Article
+type GetArticleByIdRow struct {
+	ID         int32              `json:"id"`
+	Slug       string             `json:"slug"`
+	Title      string             `json:"title"`
+	Date       pgtype.Date        `json:"date"`
+	CategoryID int32              `json:"category_id"`
+	Published  bool               `json:"published"`
+	Deleted    bool               `json:"deleted"`
+	Excerpt    string             `json:"excerpt"`
+	Body       string             `json:"body"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	Category   Category           `json:"category"`
+}
+
+func (q *Queries) GetArticleById(ctx context.Context, id int32) (GetArticleByIdRow, error) {
+	row := q.db.QueryRow(ctx, getArticleById, id)
+	var i GetArticleByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Slug,
@@ -81,6 +100,59 @@ func (q *Queries) GetArticle(ctx context.Context, id int32) (Article, error) {
 		&i.Body,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Category.ID,
+		&i.Category.Name,
+		&i.Category.Description,
+		&i.Category.CreatedAt,
+		&i.Category.UpdatedAt,
+	)
+	return i, err
+}
+
+const getArticleBySlug = `-- name: GetArticleBySlug :one
+
+SELECT a.id, a.slug, a.title, a.date, a.category_id, a.published, a.deleted, a.excerpt, a.body, a.created_at, a.updated_at, c.id, c.name, c.description, c.created_at, c.updated_at
+FROM articles a
+JOIN categories c ON c.id = a.category_id
+WHERE a.deleted = FALSE AND a.slug = $1
+ORDER BY a.date DESC
+`
+
+type GetArticleBySlugRow struct {
+	ID         int32              `json:"id"`
+	Slug       string             `json:"slug"`
+	Title      string             `json:"title"`
+	Date       pgtype.Date        `json:"date"`
+	CategoryID int32              `json:"category_id"`
+	Published  bool               `json:"published"`
+	Deleted    bool               `json:"deleted"`
+	Excerpt    string             `json:"excerpt"`
+	Body       string             `json:"body"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	Category   Category           `json:"category"`
+}
+
+func (q *Queries) GetArticleBySlug(ctx context.Context, slug string) (GetArticleBySlugRow, error) {
+	row := q.db.QueryRow(ctx, getArticleBySlug, slug)
+	var i GetArticleBySlugRow
+	err := row.Scan(
+		&i.ID,
+		&i.Slug,
+		&i.Title,
+		&i.Date,
+		&i.CategoryID,
+		&i.Published,
+		&i.Deleted,
+		&i.Excerpt,
+		&i.Body,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Category.ID,
+		&i.Category.Name,
+		&i.Category.Description,
+		&i.Category.CreatedAt,
+		&i.Category.UpdatedAt,
 	)
 	return i, err
 }
@@ -96,35 +168,95 @@ func (q *Queries) GetArticleCount(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const listArticles = `-- name: ListArticles :many
-SELECT id, title, excerpt, category_id, slug, date FROM articles WHERE deleted = FALSE
+const listAllArticles = `-- name: ListAllArticles :many
+SELECT a.id, a.title, a.excerpt, a.slug, a.date, a.published, c.id, c.name, c.description, c.created_at, c.updated_at
+FROM articles a
+JOIN categories c ON c.id = a.category_id
+WHERE a.deleted = FALSE
+ORDER BY a.date DESC
 `
 
-type ListArticlesRow struct {
-	ID         int32       `json:"id"`
-	Title      string      `json:"title"`
-	Excerpt    string      `json:"excerpt"`
-	CategoryID int32       `json:"category_id"`
-	Slug       string      `json:"slug"`
-	Date       pgtype.Date `json:"date"`
+type ListAllArticlesRow struct {
+	ID        int32       `json:"id"`
+	Title     string      `json:"title"`
+	Excerpt   string      `json:"excerpt"`
+	Slug      string      `json:"slug"`
+	Date      pgtype.Date `json:"date"`
+	Published bool        `json:"published"`
+	Category  Category    `json:"category"`
 }
 
-func (q *Queries) ListArticles(ctx context.Context) ([]ListArticlesRow, error) {
-	rows, err := q.db.Query(ctx, listArticles)
+func (q *Queries) ListAllArticles(ctx context.Context) ([]ListAllArticlesRow, error) {
+	rows, err := q.db.Query(ctx, listAllArticles)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListArticlesRow
+	var items []ListAllArticlesRow
 	for rows.Next() {
-		var i ListArticlesRow
+		var i ListAllArticlesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
 			&i.Excerpt,
-			&i.CategoryID,
 			&i.Slug,
 			&i.Date,
+			&i.Published,
+			&i.Category.ID,
+			&i.Category.Name,
+			&i.Category.Description,
+			&i.Category.CreatedAt,
+			&i.Category.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPublishedArticles = `-- name: ListPublishedArticles :many
+SELECT a.id, a.title, a.excerpt, a.slug, a.date, a.published, c.id, c.name, c.description, c.created_at, c.updated_at
+FROM articles a
+JOIN categories c ON c.id = a.category_id
+WHERE a.deleted = FALSE AND a.published = TRUE
+ORDER BY a.date DESC
+`
+
+type ListPublishedArticlesRow struct {
+	ID        int32       `json:"id"`
+	Title     string      `json:"title"`
+	Excerpt   string      `json:"excerpt"`
+	Slug      string      `json:"slug"`
+	Date      pgtype.Date `json:"date"`
+	Published bool        `json:"published"`
+	Category  Category    `json:"category"`
+}
+
+func (q *Queries) ListPublishedArticles(ctx context.Context) ([]ListPublishedArticlesRow, error) {
+	rows, err := q.db.Query(ctx, listPublishedArticles)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPublishedArticlesRow
+	for rows.Next() {
+		var i ListPublishedArticlesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Excerpt,
+			&i.Slug,
+			&i.Date,
+			&i.Published,
+			&i.Category.ID,
+			&i.Category.Name,
+			&i.Category.Description,
+			&i.Category.CreatedAt,
+			&i.Category.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
