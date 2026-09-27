@@ -39,9 +39,9 @@ export default function PetCard({
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-menu">
-      <div className="relative aspect-16/10 bg-trooper-tan/30">
+      <div className="relative aspect-16/10 overflow-hidden bg-trooper-tan/30">
         {imageUrl ? (
-          <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
+          <img src={imageUrl} alt={name} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="grid h-full w-full place-items-center">
             <img src={DefaultPet} alt="" className="h-16 w-16 opacity-30" />

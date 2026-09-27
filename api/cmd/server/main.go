@@ -11,6 +11,7 @@ import (
 
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
 	"github.com/ZappaVinny/bigtrooper/api/internal/handlers"
+	"github.com/ZappaVinny/bigtrooper/api/internal/storage"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +22,14 @@ func main() {
 	pool := connectDB()
 	defer pool.Close()
 	queries := db.New(pool)
+
+	store, err := storage.New(context.Background())
+	if err != nil {
+		log.Fatal("failed to set up R2 storage:", err)
+	}
+	if store == nil {
+		log.Println("R2_* env vars not set; pet photo uploads are disabled")
+	}
 
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
@@ -62,11 +71,15 @@ func main() {
 		protected.PATCH("/me", handlers.UpdateMe(queries))
 		protected.POST("/change-password", handlers.ChangePassword(queries))
 
-		protected.GET("/pets", handlers.ListPets(queries))
-		protected.POST("/pets/create", handlers.CreatePet(queries))
-		protected.GET("/pets/:id", handlers.GetPet(queries))
+		protected.GET("/pets", handlers.ListPets(queries, store))
+		protected.POST("/pets/create", handlers.CreatePet(queries, store))
+		protected.GET("/pets/:id", handlers.GetPet(queries, store))
 		protected.PATCH("/pets/:id", handlers.UpdatePet(queries))
-		protected.DELETE("/pets/:id", handlers.DeletePet(queries))
+		protected.DELETE("/pets/:id", handlers.DeletePet(queries, store))
+
+		protected.POST("/pets/:id/image/upload-url", handlers.RequestPetImageUpload(queries, store))
+		protected.PUT("/pets/:id/image", handlers.ConfirmPetImage(queries, store))
+		protected.DELETE("/pets/:id/image", handlers.DeletePetImage(queries, store))
 	}
 	log.Fatal(r.Run("localhost:8080"))
 }

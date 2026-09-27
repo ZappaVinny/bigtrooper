@@ -4,9 +4,12 @@ import DefaultPet from "../assets/default-pet.svg";
 
 export default function ImageUpload({
   onFileSelect,
+  initialUrl,
   className,
 }: {
   onFileSelect?: (file: File) => void;
+  /** The current photo, shown until a new file is picked. */
+  initialUrl?: string;
   className?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,8 +47,17 @@ export default function ImageUpload({
         className="hidden"
         onChange={handleFileChange}
       />
-      {previewUrl ? (
-        <img src={previewUrl} alt="Selected pet" className="h-full w-full object-cover" />
+      {previewUrl || initialUrl ? (
+        <span className="relative block h-full w-full">
+          <img
+            src={previewUrl ?? initialUrl}
+            alt={previewUrl ? "Selected pet photo" : "Current pet photo"}
+            className="h-full w-full object-cover"
+          />
+          <span className="absolute inset-0 grid place-items-center bg-trooper-black/0 text-sm font-bold text-cream opacity-0 transition-all group-hover:bg-trooper-black/40 group-hover:opacity-100">
+            Change photo
+          </span>
+        </span>
       ) : (
         <>
           <img src={DefaultPet} alt="" className="h-10 w-10 opacity-35" />

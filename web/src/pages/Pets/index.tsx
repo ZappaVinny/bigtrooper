@@ -145,6 +145,7 @@ export default function PetIndex() {
           <PetCard
             key={pet.id}
             name={pet.name}
+            imageUrl={pet.image_url ?? undefined}
             type={pet.type}
             age={pet.age}
             description={pet.description}

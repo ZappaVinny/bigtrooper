@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import PageShell from "../../components/PageShell";
 import Card from "../../components/Card";
@@ -13,6 +13,7 @@ import ImageUpload from "../../components/ImageUpload";
 import { ArrowLeftIcon } from "../../components/icons";
 import PawPrint from "../../assets/paw-print.svg";
 import { apiFetch } from "../../api/client";
+import { uploadPetImage } from "../../api/images";
 import { PetUpdate, PetNew } from "../../types/api";
 
 const PET_TYPE_OPTIONS = [
@@ -49,7 +50,12 @@ export default function PetForm({
   const [typeOpen, setTypeOpen] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [submitError, setSubmitError] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "saving" | "uploading">("idle");
+  const [photo, setPhoto] = useState<File | null>(null);
+  // Set when a new pet saved but its photo didn't (see handleSubmit).
+  const [photoError, setPhotoError] = useState(
+    (useLocation().state as { photoError?: string } | null)?.photoError ?? "",
+  );
 
   function validate(): Errors {
     const next: Errors = {};
@@ -75,20 +81,44 @@ export default function PetForm({
         ? { name, type: capitalizedType, age: Number(age), description, active: true }
         : { name, type: capitalizedType, age: Number(age), description };
 
-    setSaving(true);
+    setPhotoError("");
+    setPhase("saving");
+    let petId = initialData?.id;
     try {
       const res = await apiFetch(mode === "new" ? "/pets/create" : `/pets/${initialData?.id}`, {
         method: mode === "new" ? "POST" : "PATCH",
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      nav("/pets");
+      if (mode === "new") petId = (await res.json()).id;
     } catch (err) {
       console.error(err);
       setSubmitError("We couldn't save this pet. Please try again.");
-    } finally {
-      setSaving(false);
+      setPhase("idle");
+      return;
     }
+
+    if (photo && petId !== undefined) {
+      setPhase("uploading");
+      try {
+        await uploadPetImage(petId, photo);
+      } catch (err) {
+        const message = `Your pet was saved, but the photo wasn't: ${
+          err instanceof Error ? err.message : "please try again."
+        }`;
+        setPhase("idle");
+        if (mode === "new") {
+          // The pet exists now, so retrying here would create a duplicate.
+          // Continue on its edit page, where saving again is safe.
+          nav(`/pets/${petId}/edit`, { replace: true, state: { photoError: message } });
+        } else {
+          setPhotoError(message);
+        }
+        return;
+      }
+    }
+
+    nav("/pets");
   }
 
   return (
@@ -113,18 +143,21 @@ export default function PetForm({
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
           {submitError && <FormMessage>{submitError}</FormMessage>}
 
+          {photoError && <FormMessage>{photoError}</FormMessage>}
+
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-charcoal">Photo</span>
-            <div className="flex gap-4">
-              {initialData?.imageUrl && (
-                <img
-                  src={initialData.imageUrl}
-                  alt={initialData.name}
-                  className="h-44 w-44 shrink-0 rounded-2xl border border-line object-cover"
-                />
-              )}
-              <ImageUpload className="h-44" />
-            </div>
+            <ImageUpload
+              className="h-56"
+              initialUrl={initialData?.imageUrl}
+              onFileSelect={(file) => {
+                setPhoto(file);
+                setPhotoError("");
+              }}
+            />
+            <p className="text-xs text-charcoal/60">
+              A clear, recent photo helps finders recognize your pet.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-[2fr_1fr_1.5fr]">
@@ -163,8 +196,14 @@ export default function PetForm({
             <Button variant="ghost" size="lg" to="/pets" className="text-trooper-black">
               Cancel
             </Button>
-            <Button type="submit" size="lg" icon={PawPrint} disabled={saving}>
-              {saving ? "Saving…" : mode === "edit" ? "Save changes" : "Add pet"}
+            <Button type="submit" size="lg" icon={PawPrint} disabled={phase !== "idle"}>
+              {phase === "saving"
+                ? "Saving…"
+                : phase === "uploading"
+                  ? "Uploading photo…"
+                  : mode === "edit"
+                    ? "Save changes"
+                    : "Add pet"}
             </Button>
           </div>
         </form>

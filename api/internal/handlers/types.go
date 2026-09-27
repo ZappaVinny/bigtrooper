@@ -1,5 +1,7 @@
 package handlers
 
+import "github.com/jackc/pgx/v5/pgtype"
+
 // Request validation objects
 // {"communication": {"sms": true, "email": true}}
 type CommunicationPreference struct {
@@ -45,6 +47,15 @@ type UpdatePetRequest struct {
 	Active      *bool   `json:"active"`
 }
 
+type PetImageUploadRequest struct {
+	ContentType string `json:"content_type" binding:"required"`
+	Size        int64  `json:"size"         binding:"required,gt=0"`
+}
+
+type PetImageConfirmRequest struct {
+	Key string `json:"key" binding:"required"`
+}
+
 type UpdateMeRequest struct {
 	FirstName   *string                  `json:"first_name"`
 	LastName    *string                  `json:"last_name"`
@@ -64,4 +75,30 @@ type UserObject struct {
 	PhoneNumber string                  `json:"phone_number"`
 	Preferences CommunicationPreference `json:"preferences"`
 	Admin       *bool                   `json:"admin,omitempty"`
+}
+
+// PetObject is a single pet as returned to its owner.
+type PetObject struct {
+	ID          int32              `json:"id"`
+	OwnerID     int32              `json:"owner_id"`
+	Code        string             `json:"code"`
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Age         int32              `json:"age"`
+	Description string             `json:"description"`
+	Active      bool               `json:"active"`
+	ImageURL    *string            `json:"image_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+// PetListItem is a pet in the owner's pet list.
+type PetListItem struct {
+	ID          int32   `json:"id"`
+	Name        string  `json:"name"`
+	Type        string  `json:"type"`
+	Age         int32   `json:"age"`
+	Description string  `json:"description"`
+	Active      bool    `json:"active"`
+	ImageURL    *string `json:"image_url"`
 }

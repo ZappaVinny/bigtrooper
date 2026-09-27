@@ -36,9 +36,9 @@ type LocationState =
 function PetProfile({ pet }: { pet: FoundPet }) {
   return (
     <Card className="overflow-hidden">
-      <div className="relative aspect-4/3 bg-trooper-tan/30">
+      <div className="relative aspect-4/3 overflow-hidden bg-trooper-tan/30">
         {pet.image_url ? (
-          <img src={pet.image_url} alt={pet.name} className="h-full w-full object-cover" />
+          <img src={pet.image_url} alt={pet.name} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="grid h-full w-full place-items-center">
             <img src={DefaultPet} alt="" className="h-20 w-20 opacity-30" />

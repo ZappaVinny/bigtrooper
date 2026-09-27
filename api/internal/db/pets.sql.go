@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const codeExists = `-- name: CodeExists :one
@@ -22,7 +24,7 @@ func (q *Queries) CodeExists(ctx context.Context, code string) (bool, error) {
 
 const createPet = `-- name: CreatePet :one
 INSERT INTO pets (owner_id, code, name, type, age, description, active) 
-VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, owner_id, code, name, type, age, description, active, created_at, updated_at
+VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, owner_id, code, name, type, age, description, active, created_at, updated_at, image_key
 `
 
 type CreatePetParams struct {
@@ -57,6 +59,7 @@ func (q *Queries) CreatePet(ctx context.Context, arg CreatePetParams) (Pet, erro
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ImageKey,
 	)
 	return i, err
 }
@@ -71,7 +74,7 @@ func (q *Queries) DeletePet(ctx context.Context, id int32) error {
 }
 
 const getPetByCode = `-- name: GetPetByCode :one
-SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at FROM pets WHERE code = $1
+SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at, image_key FROM pets WHERE code = $1
 `
 
 func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
@@ -88,12 +91,13 @@ func (q *Queries) GetPetByCode(ctx context.Context, code string) (Pet, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ImageKey,
 	)
 	return i, err
 }
 
 const getPetById = `-- name: GetPetById :one
-SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at FROM pets WHERE id = $1
+SELECT id, owner_id, code, name, type, age, description, active, created_at, updated_at, image_key FROM pets WHERE id = $1
 `
 
 func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
@@ -110,21 +114,23 @@ func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ImageKey,
 	)
 	return i, err
 }
 
 const listPets = `-- name: ListPets :many
-SELECT id, name, type, age, description, active FROM pets WHERE owner_id = $1
+SELECT id, name, type, age, description, active, image_key FROM pets WHERE owner_id = $1
 `
 
 type ListPetsRow struct {
-	ID          int32  `json:"id"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Age         int32  `json:"age"`
-	Description string `json:"description"`
-	Active      bool   `json:"active"`
+	ID          int32       `json:"id"`
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	Age         int32       `json:"age"`
+	Description string      `json:"description"`
+	Active      bool        `json:"active"`
+	ImageKey    pgtype.Text `json:"image_key"`
 }
 
 func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, error) {
@@ -143,6 +149,7 @@ func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, e
 			&i.Age,
 			&i.Description,
 			&i.Active,
+			&i.ImageKey,
 		); err != nil {
 			return nil, err
 		}
@@ -152,6 +159,20 @@ func (q *Queries) ListPets(ctx context.Context, ownerID int32) ([]ListPetsRow, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const setPetImage = `-- name: SetPetImage :exec
+UPDATE pets SET image_key = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2
+`
+
+type SetPetImageParams struct {
+	ImageKey pgtype.Text `json:"image_key"`
+	ID       int32       `json:"id"`
+}
+
+func (q *Queries) SetPetImage(ctx context.Context, arg SetPetImageParams) error {
+	_, err := q.db.Exec(ctx, setPetImage, arg.ImageKey, arg.ID)
+	return err
 }
 
 const updatePet = `-- name: UpdatePet :exec

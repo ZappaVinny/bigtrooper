@@ -42,6 +42,7 @@ export type ListPet = {
   age: number;
   description: string;
   active: boolean;
+  image_url: string | null;
 };
 
 export type Pet = {
@@ -53,6 +54,7 @@ export type Pet = {
   age: number;
   description: string;
   active: boolean;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -19,6 +19,7 @@ type Pet struct {
 	Active      bool               `json:"active"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ImageKey    pgtype.Text        `json:"image_key"`
 }
 
 type Session struct {

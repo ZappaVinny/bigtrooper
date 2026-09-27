@@ -17,7 +17,9 @@
 //      read as "not active" to the finder). Respond with ONLY what a finder
 //      should see, never owner details:
 //        { "name": "Trooper", "type": "Dog", "age": 4,
-//          "description": "...", "image_url": null }
+//          "description": "...", "image_url": "https://images.../pets/12/ab.jpg" }
+//      Build image_url from pets.image_key with the same imageURL() helper the
+//      owner endpoints use (api/internal/handlers/images.go); null if no photo.
 //
 //   2. POST /api/found/:code/report
 //      Body:

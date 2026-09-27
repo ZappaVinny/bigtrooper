@@ -26,7 +26,15 @@ export default function EditPet() {
     return () => req.abort();
   }, [id]);
 
-  if (pet) return <PetForm key={pet.id} mode="edit" initialData={pet} />;
+  if (pet) {
+    return (
+      <PetForm
+        key={pet.id}
+        mode="edit"
+        initialData={{ ...pet, imageUrl: pet.image_url ?? undefined }}
+      />
+    );
+  }
 
   if (failed) {
     return (
