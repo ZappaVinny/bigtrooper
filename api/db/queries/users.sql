@@ -16,3 +16,6 @@ UPDATE users SET first_name = $1, last_name = $2, email = $3, phone_number = $4,
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = $1;
+
+-- name: GetUserCount :one
+SELECT COUNT(*) FROM users;

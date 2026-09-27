@@ -119,6 +119,28 @@ func (q *Queries) GetPetById(ctx context.Context, id int32) (Pet, error) {
 	return i, err
 }
 
+const getPetCount = `-- name: GetPetCount :one
+SELECT COUNT(*) FROM pets
+`
+
+func (q *Queries) GetPetCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getPetCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getPetCountByOwner = `-- name: GetPetCountByOwner :one
+SELECT COUNT(*) FROM pets WHERE owner_id = $1
+`
+
+func (q *Queries) GetPetCountByOwner(ctx context.Context, ownerID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, getPetCountByOwner, ownerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listPets = `-- name: ListPets :many
 SELECT id, name, type, age, description, active, image_key FROM pets WHERE owner_id = $1
 `

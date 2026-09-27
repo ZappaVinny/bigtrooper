@@ -8,6 +8,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Article struct {
+	ID         int32              `json:"id"`
+	Slug       string             `json:"slug"`
+	Title      string             `json:"title"`
+	Date       pgtype.Date        `json:"date"`
+	CategoryID int32              `json:"category_id"`
+	Published  bool               `json:"published"`
+	Deleted    bool               `json:"deleted"`
+	Excerpt    string             `json:"excerpt"`
+	Body       string             `json:"body"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Category struct {
+	ID          int32            `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+}
+
 type Pet struct {
 	ID          int32              `json:"id"`
 	OwnerID     int32              `json:"owner_id"`

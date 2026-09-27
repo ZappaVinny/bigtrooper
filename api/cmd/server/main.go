@@ -52,9 +52,11 @@ func main() {
 
 	public := r.Group("/api/")
 	{
-		public.GET("/ping", handlers.Status)
+		public.GET("/up", handlers.Status)
 		public.POST("/login", handlers.Login(queries))
 		public.POST("/signup", handlers.Signup(queries))
+		public.GET("/articles", handlers.ListArticles(queries))
+		public.GET("/articles/:slug", handlers.GetArticle(queries))
 	}
 
 	optional := r.Group("/api/")
@@ -81,6 +83,25 @@ func main() {
 		protected.PUT("/pets/:id/image", handlers.ConfirmPetImage(queries, store))
 		protected.DELETE("/pets/:id/image", handlers.DeletePetImage(queries, store))
 	}
+
+	admin := r.Group("/api/admin/")
+	admin.Use(handlers.AuthRequired(queries), handlers.AdminRequired())
+	{
+		admin.GET("/statistics", handlers.GetStatistics(queries))
+
+		admin.GET("/categories", handlers.ListCategories(queries))
+		admin.GET("/categories/:id", handlers.GetCategory(queries))
+		admin.POST("/categories", handlers.CreateCategory(queries))
+		admin.PATCH("/categories/:id", handlers.UpdateCategory(queries))
+		admin.DELETE("/categories/:id", handlers.DeleteCategory(queries))
+
+		admin.GET("/articles", handlers.ListArticles(queries))
+		admin.GET("/articles/:slug", handlers.GetArticle(queries))
+		admin.POST("/articles", handlers.CreateArticle(queries))
+		admin.PATCH("/articles/:slug", handlers.UpdateArticle(queries))
+		admin.DELETE("/articles/:slug", handlers.DeleteArticle(queries))
+	}
+
 	log.Fatal(r.Run("localhost:8080"))
 }
 

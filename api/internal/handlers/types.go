@@ -102,3 +102,19 @@ type PetListItem struct {
 	Active      bool    `json:"active"`
 	ImageURL    *string `json:"image_url"`
 }
+
+type CategoryCreateRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}
+
+type CategoryUpdateRequest struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+}
+
+type CategoryObject struct {
+	ID          int32  `json:"id"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+}

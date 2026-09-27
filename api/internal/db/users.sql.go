@@ -123,6 +123,17 @@ func (q *Queries) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) 
 	return i, err
 }
 
+const getUserCount = `-- name: GetUserCount :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, getUserCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users SET first_name = $1, last_name = $2, email = $3, phone_number = $4, password = $5, preferences = $6, admin = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8
 `

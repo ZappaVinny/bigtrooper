@@ -22,3 +22,9 @@ DELETE FROM pets WHERE id = $1;
 
 -- name: SetPetImage :exec
 UPDATE pets SET image_key = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2;
+
+-- name: GetPetCount :one
+SELECT COUNT(*) FROM pets;
+
+-- name: GetPetCountByOwner :one
+SELECT COUNT(*) FROM pets WHERE owner_id = $1;

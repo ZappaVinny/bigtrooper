@@ -1,0 +1,14 @@
+CREATE TABLE articles (
+    id SERIAL PRIMARY KEY,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    date DATE NOT NULL,
+    category_id INTEGER NOT NULL REFERENCES categories(id),
+    published boolean NOT NULL DEFAULT FALSE,
+    deleted boolean NOT NULL DEFAULT FALSE,
+    excerpt TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+

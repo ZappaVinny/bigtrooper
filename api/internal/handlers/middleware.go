@@ -63,3 +63,19 @@ func setAdminIfPresent(user db.User, c *gin.Context) {
 		c.Set("admin", true)
 	}
 }
+
+// AdminRequired rejects non-admins. It relies on AuthRequired running first
+// (which sets "admin" for admin users), so always chain it after that.
+func AdminRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if _, loggedIn := c.Get("user_id"); !loggedIn {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		if isAdmin, _ := c.Get("admin"); isAdmin != true {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
+		c.Next()
+	}
+}
