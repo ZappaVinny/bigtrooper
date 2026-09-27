@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -15,18 +16,24 @@ import (
 
 const bcryptCost = 12
 
+func setSessionCookie(c *gin.Context, token string, maxAge int) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("session_token", token, maxAge, "/", "", os.Getenv("COOKIE_SECURE") == "true", true)
+}
+
 func Login(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Printf("login: bad request: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
 		//if logged in already, redirect to /me
 		token, err := getToken(c)
 		if err == nil {
-			_, err := q.GetSessionByToken(c, token)
+			_, err := q.GetSessionByToken(c, hashToken(token))
 			if err == nil {
 				c.JSON(http.StatusConflict, gin.H{"error": "already logged in"})
 				return
@@ -63,14 +70,13 @@ func Login(q *db.Queries) gin.HandlerFunc {
 
 		_, err = q.CreateSession(c, db.CreateSessionParams{
 			UserID: user.ID,
-			Token:  token,
+			Token:  hashToken(token),
 			ExpiresAt: pgtype.Timestamptz{
 				Time:  time.Now().Add(7 * 24 * time.Hour),
 				Valid: true},
 		})
 
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie("session_token", token, 86400*7, "/", "", false, true)
+		setSessionCookie(c, token, 86400*7)
 
 		CommunicationPreference := CommunicationPreference{}
 		err = json.Unmarshal(user.Preferences, &CommunicationPreference)
@@ -106,9 +112,8 @@ func Logout(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		q.DeleteSession(c, token)
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie("session_token", "", -1, "/", "", false, true)
+		q.DeleteSession(c, hashToken(token))
+		setSessionCookie(c, "", -1)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "logout Sucessful",
 		})
@@ -119,7 +124,8 @@ func Signup(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req SignupRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Printf("signup: bad request: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
@@ -167,7 +173,8 @@ func ChangePassword(q *db.Queries) gin.HandlerFunc {
 
 		var req ChangePasswordRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Printf("change password: bad request: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
@@ -202,6 +209,15 @@ func ChangePassword(q *db.Queries) gin.HandlerFunc {
 			log.Printf("change password: update user failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update password"})
 			return
+		}
+
+		if token, err := getToken(c); err == nil {
+			if err := q.DeleteOtherSessions(c, db.DeleteOtherSessionsParams{
+				UserID: user.ID,
+				Token:  hashToken(token),
+			}); err != nil {
+				log.Printf("change password: delete other sessions failed: %v", err)
+			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "password changed"})
@@ -252,7 +268,8 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 
 		var req UpdateMeRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Printf("update me: bad request: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
@@ -271,6 +288,16 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 			Password:    existingUser.Password,
 			Preferences: existingUser.Preferences,
 			Admin:       existingUser.Admin,
+		}
+
+		emailChanging := req.Email != nil && *req.Email != existingUser.Email
+		phoneChanging := req.PhoneNumber != nil && *req.PhoneNumber != existingUser.PhoneNumber
+		if emailChanging || phoneChanging {
+			if req.CurrentPassword == nil ||
+				bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(*req.CurrentPassword)) != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "current password is incorrect"})
+				return
+			}
 		}
 
 		if req.FirstName != nil {
@@ -292,14 +319,6 @@ func UpdateMe(q *db.Queries) gin.HandlerFunc {
 				return
 			}
 			updateParams.PhoneNumber = *req.PhoneNumber
-		}
-		if req.Password != nil {
-			hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcryptCost)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not hash password"})
-				return
-			}
-			updateParams.Password = string(hash)
 		}
 		if req.Preferences != nil {
 			pref := CommunicationPreference{

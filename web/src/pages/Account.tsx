@@ -147,6 +147,63 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function ConfirmPasswordModal({
+  onCancel,
+  onConfirm,
+}: {
+  onCancel: () => void;
+  onConfirm: (password: string) => Promise<string | null>;
+}) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!password) {
+      setError("Enter your current password.");
+      return;
+    }
+    setError("");
+    setSubmitting(true);
+    const message = await onConfirm(password);
+    setSubmitting(false);
+    if (message) setError(message);
+  }
+
+  return (
+    <Modal onClose={onCancel} labelledBy="confirm-password-title">
+      <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-col">
+        <ModalHeader id="confirm-password-title" onClose={onCancel}>
+          Confirm it's you
+        </ModalHeader>
+        <ModalBody>
+          <p className="text-sm text-charcoal/70">
+            Changing your email or phone number needs your current password.
+          </p>
+          {error && <FormMessage>{error}</FormMessage>}
+          <FormField label="Current password">
+            <TextInput
+              inputType="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={setPassword}
+            />
+          </FormField>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="ghost" onClick={onCancel} className="text-trooper-black">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Saving…" : "Confirm and save"}
+          </Button>
+        </ModalFooter>
+      </form>
+    </Modal>
+  );
+}
+
 export default function Account() {
   const { user, refreshUser } = useAuth();
 
@@ -161,6 +218,7 @@ export default function Account() {
     user?.preferences.sms ?? false,
   );
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
@@ -177,12 +235,21 @@ export default function Account() {
       return;
     }
 
+    if (email !== user?.email || phone !== user?.phone_number) {
+      setConfirmOpen(true);
+      return;
+    }
+    await save();
+  }
+
+  async function save(currentPassword?: string): Promise<string | null> {
     const patch: UserUpdate = {
       first_name: firstName,
       last_name: lastName,
       email,
       phone_number: phone,
       preferences: { email: emailNotification, sms: phoneNotification },
+      ...(currentPassword ? { current_password: currentPassword } : {}),
     };
 
     setSaving(true);
@@ -194,14 +261,21 @@ export default function Account() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const msg: string = data.error ?? "We couldn't save your changes.";
-        setStatus({ tone: "error", text: msg.charAt(0).toUpperCase() + msg.slice(1) + "." });
-        return;
+        const text = msg.charAt(0).toUpperCase() + msg.slice(1) + ".";
+        if (res.status === 401 && currentPassword) return text;
+        setConfirmOpen(false);
+        setStatus({ tone: "error", text });
+        return null;
       }
       await refreshUser();
+      setConfirmOpen(false);
       setStatus({ tone: "success", text: "Your changes have been saved." });
+      return null;
     } catch (err) {
       console.error(err);
+      setConfirmOpen(false);
       setStatus({ tone: "error", text: "Something went wrong. Please try again." });
+      return null;
     } finally {
       setSaving(false);
     }
@@ -214,6 +288,9 @@ export default function Account() {
       width="md"
     >
       {passwordOpen && <ChangePasswordModal onClose={() => setPasswordOpen(false)} />}
+      {confirmOpen && (
+        <ConfirmPasswordModal onCancel={() => setConfirmOpen(false)} onConfirm={save} />
+      )}
 
       <form onSubmit={handleSave} noValidate className="flex flex-col gap-6">
         <Section

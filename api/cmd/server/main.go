@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -42,9 +43,10 @@ func main() {
 	}()
 
 	r := gin.Default()
+	configureClientIP(r)
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     allowedOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -53,10 +55,14 @@ func main() {
 	public := r.Group("/api/")
 	{
 		public.GET("/up", handlers.Status)
-		public.POST("/login", handlers.Login(queries))
-		public.POST("/signup", handlers.Signup(queries))
+		public.POST("/login", handlers.RateLimit(10, 5), handlers.Login(queries))
+		public.POST("/signup", handlers.RateLimit(5, 3), handlers.Signup(queries))
 		public.GET("/articles", handlers.ListPublishedArticles(queries))
 		public.GET("/articles/:slug", handlers.GetPublishedArticle(queries))
+
+		// What a pet's QR tag opens. Public, so both are rate-limited.
+		public.GET("/found/:code", handlers.RateLimit(30, 10), handlers.GetFoundPet(queries, store))
+		public.POST("/found/:code/report", handlers.RateLimit(5, 3), handlers.ReportFoundPet(queries))
 	}
 
 	optional := r.Group("/api/")
@@ -103,6 +109,42 @@ func main() {
 	}
 
 	log.Fatal(r.Run("localhost:8080"))
+}
+
+// allowedOrigins reads CORS_ORIGINS (comma-separated), defaulting to the
+// local Vite dev server.
+func allowedOrigins() []string {
+	var origins []string
+	for _, o := range strings.Split(os.Getenv("CORS_ORIGINS"), ",") {
+		if o = strings.TrimSpace(o); o != "" {
+			origins = append(origins, o)
+		}
+	}
+	if len(origins) == 0 {
+		return []string{"http://localhost:5173"}
+	}
+	return origins
+}
+
+// configureClientIP decides which proxies may set the client IP, which the
+// rate limiter relies on. Configured from .env (see .env.example):
+//   - TRUSTED_PLATFORM=cloudflare: take the IP from Cloudflare's CF-Connecting-IP.
+//   - TRUSTED_PROXIES=ip,cidr,...: trust X-Forwarded-For only from these proxies.
+//   - Neither set: ignore forwarded headers and use the connecting IP (dev default).
+func configureClientIP(r *gin.Engine) {
+	if strings.EqualFold(os.Getenv("TRUSTED_PLATFORM"), "cloudflare") {
+		r.TrustedPlatform = gin.PlatformCloudflare
+	}
+
+	var proxies []string
+	for _, p := range strings.Split(os.Getenv("TRUSTED_PROXIES"), ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			proxies = append(proxies, p)
+		}
+	}
+	if err := r.SetTrustedProxies(proxies); err != nil {
+		log.Fatalf("invalid TRUSTED_PROXIES %q: %v", os.Getenv("TRUSTED_PROXIES"), err)
+	}
 }
 
 func connectDB() *pgxpool.Pool {

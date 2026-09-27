@@ -3,7 +3,6 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
 	"github.com/ZappaVinny/bigtrooper/api/internal/storage"
@@ -91,26 +90,8 @@ func CreatePet(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 
 func GetPet(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-
-		petID, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid pet ID"})
-			return
-		}
-
-		pet, err := q.GetPetById(c, int32(petID))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get pet"})
-			return
-		}
-
-		if pet.OwnerID != userID.(int32) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		pet, ok := ownedPet(c, q)
+		if !ok {
 			return
 		}
 
@@ -120,32 +101,14 @@ func GetPet(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 
 func UpdatePet(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-
-		petID, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid pet ID"})
+		existingPet, ok := ownedPet(c, q)
+		if !ok {
 			return
 		}
 
 		var req UpdatePetRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-			return
-		}
-
-		existingPet, err := q.GetPetById(c, int32(petID))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get pet"})
-			return
-		}
-
-		if existingPet.OwnerID != userID.(int32) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 			return
 		}
 
@@ -170,7 +133,7 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 			active = *req.Active
 		}
 
-		err = q.UpdatePet(c, db.UpdatePetParams{
+		err := q.UpdatePet(c, db.UpdatePetParams{
 			OwnerID:     existingPet.OwnerID,
 			Code:        existingPet.Code,
 			Name:        name,
@@ -178,7 +141,7 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 			Age:         age,
 			Description: description,
 			Active:      active,
-			ID:          int32(petID),
+			ID:          existingPet.ID,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update pet"})
@@ -190,30 +153,12 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 
 func DeletePet(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		existingPet, ok := ownedPet(c, q)
+		if !ok {
 			return
 		}
 
-		petID, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid pet ID"})
-			return
-		}
-
-		existingPet, err := q.GetPetById(c, int32(petID))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get pet"})
-			return
-		}
-
-		if existingPet.OwnerID != userID.(int32) {
-			c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
-			return
-		}
-
-		err = q.DeletePet(c, int32(petID))
+		err := q.DeletePet(c, existingPet.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete pet"})
 			return

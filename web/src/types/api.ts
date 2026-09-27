@@ -28,6 +28,7 @@ export type UserUpdate = {
   email?: string;
   phone_number?: string;
   preferences?: CommunicationPreference;
+  current_password?: string;
 };
 
 export type ChangePassword = {

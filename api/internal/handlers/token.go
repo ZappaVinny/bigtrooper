@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -13,6 +14,13 @@ func generateToken() (string, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	return hex.EncodeToString(b), err
+}
+
+// hashToken is what the sessions table stores. The cookie carries the raw
+// token, so a leaked database can't be used to hijack sessions.
+func hashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }
 
 func getToken(c *gin.Context) (string, error) {

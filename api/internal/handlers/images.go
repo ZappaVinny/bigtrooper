@@ -32,7 +32,6 @@ var imageExtensions = map[string]string{
 	"image/webp": "webp",
 }
 
-// imageURL turns a stored key into a public URL, or nil when there's no image.
 func imageURL(store *storage.R2, key pgtype.Text) *string {
 	if store == nil || !key.Valid || key.String == "" {
 		return nil
@@ -47,8 +46,6 @@ func randomHex(n int) string {
 	return hex.EncodeToString(b)
 }
 
-// ownedPet loads the pet in the :id param and checks it belongs to the
-// logged-in user, writing the error response itself when it doesn't.
 func ownedPet(c *gin.Context, q *db.Queries) (db.Pet, bool) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -70,7 +67,7 @@ func ownedPet(c *gin.Context, q *db.Queries) (db.Pet, bool) {
 		return db.Pet{}, false
 	}
 	if pet.OwnerID != userID.(int32) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "pet not found"})
 		return db.Pet{}, false
 	}
 	return pet, true
@@ -84,7 +81,6 @@ func requireStorage(c *gin.Context, store *storage.R2) bool {
 	return true
 }
 
-// RequestPetImageUpload returns how and where the browser should upload a photo.
 func RequestPetImageUpload(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !requireStorage(c, store) {
@@ -128,7 +124,6 @@ func RequestPetImageUpload(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	}
 }
 
-// ConfirmPetImage verifies an uploaded object and makes it the pet's photo.
 func ConfirmPetImage(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !requireStorage(c, store) {
@@ -182,7 +177,6 @@ func ConfirmPetImage(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	}
 }
 
-// DeletePetImage removes a pet's photo.
 func DeletePetImage(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !requireStorage(c, store) {

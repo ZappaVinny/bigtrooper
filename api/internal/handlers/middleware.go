@@ -15,7 +15,7 @@ func AuthRequired(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		session, err := q.GetSessionByToken(c, token)
+		session, err := q.GetSessionByToken(c, hashToken(token))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
@@ -40,7 +40,7 @@ func OptionalAuth(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		session, err := q.GetSessionByToken(c, token)
+		session, err := q.GetSessionByToken(c, hashToken(token))
 		if err != nil {
 			c.Next()
 			return

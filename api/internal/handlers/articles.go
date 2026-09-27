@@ -104,7 +104,6 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 
 		slug := slug.Make(request.Title)
 
-		// The admin editor sends plain dates like "2026-09-27".
 		dt, err := time.Parse("2006-01-02", request.Date)
 		if err != nil {
 			c.JSON(400, gin.H{"error": "Invalid date format"})
@@ -204,7 +203,7 @@ func GetPublishedArticle(q *db.Queries) gin.HandlerFunc {
 		}
 
 		if !article.Published {
-			c.JSON(403, gin.H{"error": "Article is not published"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Article not found"})
 			return
 		}
 

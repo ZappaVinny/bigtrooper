@@ -57,12 +57,12 @@ type PetImageConfirmRequest struct {
 }
 
 type UpdateMeRequest struct {
-	FirstName   *string                  `json:"first_name"`
-	LastName    *string                  `json:"last_name"`
-	Email       *string                  `json:"email"        binding:"omitempty,email"`
-	PhoneNumber *string                  `json:"phone_number"`
-	Password    *string                  `json:"password"     binding:"omitempty,min=8,max=72"`
-	Preferences *CommunicationPreference `json:"preferences"`
+	FirstName       *string                  `json:"first_name"`
+	LastName        *string                  `json:"last_name"`
+	Email           *string                  `json:"email"        binding:"omitempty,email"`
+	PhoneNumber     *string                  `json:"phone_number"`
+	Preferences     *CommunicationPreference `json:"preferences"`
+	CurrentPassword *string                  `json:"current_password"`
 }
 
 // Response objects
@@ -77,7 +77,6 @@ type UserObject struct {
 	Admin       *bool                   `json:"admin,omitempty"`
 }
 
-// PetObject is a single pet as returned to its owner.
 type PetObject struct {
 	ID          int32              `json:"id"`
 	OwnerID     int32              `json:"owner_id"`
@@ -92,7 +91,6 @@ type PetObject struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
-// PetListItem is a pet in the owner's pet list.
 type PetListItem struct {
 	ID          int32   `json:"id"`
 	Name        string  `json:"name"`
