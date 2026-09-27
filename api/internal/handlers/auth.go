@@ -75,6 +75,11 @@ func Login(q *db.Queries) gin.HandlerFunc {
 				Time:  time.Now().Add(7 * 24 * time.Hour),
 				Valid: true},
 		})
+		if err != nil {
+			log.Printf("login: create session failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create session"})
+			return
+		}
 
 		setSessionCookie(c, token, 86400*7)
 

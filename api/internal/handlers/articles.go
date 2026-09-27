@@ -1,17 +1,14 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/gosimple/slug"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -25,6 +22,39 @@ type ListArticleObject struct {
 	Slug      string         `json:"slug"`
 }
 
+func toCategoryObject(cat db.Category) CategoryObject {
+	return CategoryObject{
+		ID:          cat.ID,
+		Name:        cat.Name,
+		Description: cat.Description.String,
+	}
+}
+
+func toListArticleObject(id int32, title, excerpt, slug string, date pgtype.Date, published bool, cat db.Category) ListArticleObject {
+	return ListArticleObject{
+		ID:        id,
+		Title:     title,
+		Excerpt:   excerpt,
+		Slug:      slug,
+		Published: published,
+		Date:      date.Time.Format("2006-01-02"),
+		Category:  toCategoryObject(cat),
+	}
+}
+
+func toArticleObject(a db.GetArticleBySlugRow) ArticleObject {
+	return ArticleObject{
+		ID:        a.ID,
+		Title:     a.Title,
+		Body:      a.Body,
+		Excerpt:   a.Excerpt,
+		Date:      a.Date.Time.Format("2006-01-02"),
+		Published: a.Published,
+		Category:  toCategoryObject(a.Category),
+		Slug:      a.Slug,
+	}
+}
+
 func ListAllArticles(q *db.Queries) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		articles, err := q.ListAllArticles(c.Request.Context())
@@ -36,19 +66,7 @@ func ListAllArticles(q *db.Queries) gin.HandlerFunc {
 		result := make([]ListArticleObject, 0, len(articles))
 
 		for _, a := range articles {
-			result = append(result, ListArticleObject{
-				ID:        a.ID,
-				Title:     a.Title,
-				Excerpt:   a.Excerpt,
-				Slug:      a.Slug,
-				Published: a.Published,
-				Date:      a.Date.Time.Format("2006-01-02"),
-				Category: CategoryObject{
-					ID:          a.Category.ID,
-					Name:        a.Category.Name,
-					Description: a.Category.Description.String,
-				},
-			})
+			result = append(result, toListArticleObject(a.ID, a.Title, a.Excerpt, a.Slug, a.Date, a.Published, a.Category))
 		}
 		fmt.Println("Articles fetched:", len(result))
 		c.JSON(http.StatusOK, result)
@@ -66,19 +84,7 @@ func ListPublishedArticles(q *db.Queries) gin.HandlerFunc {
 		result := make([]ListArticleObject, 0, len(articles))
 
 		for _, a := range articles {
-			result = append(result, ListArticleObject{
-				ID:        a.ID,
-				Title:     a.Title,
-				Excerpt:   a.Excerpt,
-				Slug:      a.Slug,
-				Published: a.Published,
-				Date:      a.Date.Time.Format("2006-01-02"),
-				Category: CategoryObject{
-					ID:          a.Category.ID,
-					Name:        a.Category.Name,
-					Description: a.Category.Description.String,
-				},
-			})
+			result = append(result, toListArticleObject(a.ID, a.Title, a.Excerpt, a.Slug, a.Date, a.Published, a.Category))
 		}
 		fmt.Println("Articles fetched:", len(result))
 		c.JSON(http.StatusOK, result)
@@ -126,33 +132,19 @@ func CreateArticle(q *db.Queries) gin.HandlerFunc {
 		})
 		if err != nil {
 			log.Printf("CreateArticle: failed to create article: %v", err)
-			// Postgres says which key failed, e.g. Detail
-			// `Key (slug)=(my-title) already exists.`
-			//This is a shitty error management system, but it works for now.
-			var pgErr *pgconn.PgError
-			if errors.As(err, &pgErr) {
-				field := pgErr.ColumnName
-				if start := strings.Index(pgErr.Detail, "Key ("); start != -1 {
-					if end := strings.Index(pgErr.Detail[start:], ")="); end != -1 {
-						field = pgErr.Detail[start+len("Key (") : start+end]
-					}
-				}
-				switch pgErr.Code {
-				case "23505": // unique_violation
-					c.JSON(409, gin.H{"error": "Failed to create article", "field": field, "issue": "duplicate"})
-					return
-				case "23503": // foreign_key_violation
-					c.JSON(400, gin.H{"error": "Failed to create article", "field": field, "issue": "not_found"})
-					return
-				case "23502": // not_null_violation
-					c.JSON(400, gin.H{"error": "Failed to create article", "field": field, "issue": "required"})
-					return
-				}
+			if !respondDBError(c, err, "create article") {
+				c.JSON(500, gin.H{"error": "Failed to create article"})
 			}
-			c.JSON(500, gin.H{"error": "Failed to create article"})
 			return
 		}
-		c.JSON(201, article)
+
+		fresh, err := q.GetArticleBySlug(c.Request.Context(), article.Slug)
+		if err != nil {
+			log.Printf("CreateArticle: failed to reload article: %v", err)
+			c.JSON(500, gin.H{"error": "Failed to load created article"})
+			return
+		}
+		c.JSON(201, toArticleObject(fresh))
 	}
 }
 
@@ -176,20 +168,7 @@ func GetAnyArticle(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		result := ArticleObject{
-			ID:      article.ID,
-			Title:   article.Title,
-			Body:    article.Body,
-			Excerpt: article.Excerpt,
-			Date:    article.Date.Time.Format("2006-01-02"),
-			Category: CategoryObject{
-				ID:          article.Category.ID,
-				Name:        article.Category.Name,
-				Description: article.Category.Description.String,
-			},
-			Slug: article.Slug,
-		}
-		c.JSON(200, result)
+		c.JSON(200, toArticleObject(article))
 	}
 }
 
@@ -207,20 +186,7 @@ func GetPublishedArticle(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 
-		result := ArticleObject{
-			ID:      article.ID,
-			Title:   article.Title,
-			Body:    article.Body,
-			Excerpt: article.Excerpt,
-			Date:    article.Date.Time.Format("2006-01-02"),
-			Category: CategoryObject{
-				ID:          article.Category.ID,
-				Name:        article.Category.Name,
-				Description: article.Category.Description.String,
-			},
-			Slug: article.Slug,
-		}
-		c.JSON(200, result)
+		c.JSON(200, toArticleObject(article))
 	}
 }
 
@@ -278,7 +244,7 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 			}
 		}
 
-		createErr := q.UpdateArticle(c.Request.Context(), db.UpdateArticleParams{
+		err = q.UpdateArticle(c.Request.Context(), db.UpdateArticleParams{
 			ID:         updated.ID,
 			Title:      updated.Title,
 			Excerpt:    updated.Excerpt,
@@ -288,26 +254,21 @@ func UpdateArticle(q *db.Queries) gin.HandlerFunc {
 			Date:       updated.Date,
 			Slug:       updated.Slug,
 		})
-		if createErr != nil {
-			log.Printf("UpdateArticle: failed to update article: %v", createErr)
-			c.JSON(500, gin.H{"error": "Failed to update article"})
+		if err != nil {
+			log.Printf("UpdateArticle: failed to update article: %v", err)
+			if !respondDBError(c, err, "update article") {
+				c.JSON(500, gin.H{"error": "Failed to update article"})
+			}
 			return
 		}
 
-		result := ArticleObject{
-			ID:      updated.ID,
-			Title:   updated.Title,
-			Body:    updated.Body,
-			Excerpt: updated.Excerpt,
-			Date:    updated.Date.Time.Format("2006-01-02"),
-			Category: CategoryObject{
-				ID:          updated.Category.ID,
-				Name:        updated.Category.Name,
-				Description: updated.Category.Description.String,
-			},
-			Slug: updated.Slug,
+		fresh, err := q.GetArticleBySlug(c.Request.Context(), updated.Slug)
+		if err != nil {
+			log.Printf("UpdateArticle: failed to reload article: %v", err)
+			c.JSON(500, gin.H{"error": "Failed to load updated article"})
+			return
 		}
-		c.JSON(200, result)
+		c.JSON(200, toArticleObject(fresh))
 	}
 }
 

@@ -69,19 +69,27 @@ func CreatePet(q *db.Queries, store *storage.R2) gin.HandlerFunc {
 			return
 		}
 
-		var code = generateUniqueCode(c, q)
+		code, err := generateUniqueCode(c, q)
+		if err != nil {
+			log.Printf("create pet: generate code: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create pet"})
+			return
+		}
 
 		pet, err := q.CreatePet(c, db.CreatePetParams{
 			OwnerID:     userID.(int32),
 			Code:        code,
 			Name:        req.Name,
 			Type:        req.Type,
-			Age:         req.Age,
+			Age:         *req.Age,
 			Description: req.Description,
 			Active:      req.Active,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create pet"})
+			log.Printf("create pet: %v", err)
+			if !respondDBError(c, err, "create pet") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to create pet"})
+			}
 			return
 		}
 		c.JSON(http.StatusCreated, toPetObject(store, pet))
@@ -144,7 +152,10 @@ func UpdatePet(q *db.Queries) gin.HandlerFunc {
 			ID:          existingPet.ID,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update pet"})
+			log.Printf("update pet: %v", err)
+			if !respondDBError(c, err, "update pet") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to update pet"})
+			}
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "pet updated"})

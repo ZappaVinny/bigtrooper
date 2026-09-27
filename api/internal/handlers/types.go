@@ -34,7 +34,7 @@ type LoginRequest struct {
 type CreatePetRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Type        string `json:"type" binding:"required"`
-	Age         int32  `json:"age" binding:"required"`
+	Age         *int32 `json:"age" binding:"required,min=0"`
 	Description string `json:"description"`
 	Active      bool   `json:"active"`
 }

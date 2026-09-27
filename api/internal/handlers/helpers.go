@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
@@ -10,14 +11,18 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func generateUniqueCode(c *gin.Context, q *db.Queries) string {
-	for {
+func generateUniqueCode(c *gin.Context, q *db.Queries) (string, error) {
+	for range 10 {
 		code := randomString(5)
-		exists, _ := q.CodeExists(c, code)
+		exists, err := q.CodeExists(c, code)
+		if err != nil {
+			return "", err
+		}
 		if !exists {
-			return code
+			return code, nil
 		}
 	}
+	return "", errors.New("could not find a free pet code")
 }
 
 func randomString(n int) string {

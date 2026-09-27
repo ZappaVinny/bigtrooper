@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/ZappaVinny/bigtrooper/api/internal/db"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -40,6 +42,10 @@ func GetCategory(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 		category, err := q.GetCategory(c.Request.Context(), int32(id))
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch category"})
 			return
@@ -71,7 +77,10 @@ func CreateCategory(q *db.Queries) gin.HandlerFunc {
 			},
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create category"})
+			log.Printf("Error creating category: %v", err)
+			if !respondDBError(c, err, "create category") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create category"})
+			}
 			return
 		}
 
@@ -98,6 +107,10 @@ func UpdateCategory(q *db.Queries) gin.HandlerFunc {
 			return
 		}
 		existing, err := q.GetCategory(c.Request.Context(), int32(id))
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch category"})
 			return
@@ -117,7 +130,9 @@ func UpdateCategory(q *db.Queries) gin.HandlerFunc {
 		})
 		if err != nil {
 			log.Printf("Error updating category: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update category"})
+			if !respondDBError(c, err, "update category") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update category"})
+			}
 			return
 		}
 
@@ -138,10 +153,19 @@ func DeleteCategory(q *db.Queries) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid category ID"})
 			return
 		}
+		if _, err := q.GetCategory(c.Request.Context(), int32(id)); errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+			return
+		} else if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch category"})
+			return
+		}
 		err = q.DeleteCategory(c.Request.Context(), int32(id))
 		if err != nil {
 			log.Printf("Error deleting category: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete category"})
+			if !respondDBError(c, err, "delete category") {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete category"})
+			}
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Category deleted"})
