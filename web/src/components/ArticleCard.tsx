@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import type { Article } from "../content/articles";
-import { formatDate, readingMinutes } from "../content/articles";
+import type { ArticleListItem } from "../types/api";
+import { formatDate } from "../content/articles";
 import { cn } from "../lib/cn";
 import { ArrowRightIcon } from "./icons";
 
@@ -8,7 +8,7 @@ export default function ArticleCard({
   article,
   featured = false,
 }: {
-  article: Article;
+  article: ArticleListItem;
   featured?: boolean;
 }) {
   return (
@@ -28,10 +28,10 @@ export default function ArticleCard({
             featured ? "bg-trooper-amber text-cream" : "bg-trooper-tan/35 text-trooper-amber",
           )}
         >
-          {article.category}
+          {article.category.name}
         </span>
         <span className={featured ? "text-cream/60" : "text-charcoal/50"}>
-          {formatDate(article.date)} · {readingMinutes(article)} min read
+          {formatDate(article.date_published)}
         </span>
       </div>
       <h2

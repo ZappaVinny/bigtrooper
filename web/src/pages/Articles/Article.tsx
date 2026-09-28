@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageShell from "../../components/PageShell";
 import Card from "../../components/Card";
@@ -5,21 +6,48 @@ import Button from "../../components/Button";
 import ArticleCard from "../../components/ArticleCard";
 import TableOfContents from "../../components/TableOfContents";
 import { ArrowLeftIcon } from "../../components/icons";
-import {
-  formatDate,
-  getHeadings,
-  readingMinutes,
-  sortNewest,
-} from "../../content/articles";
-import { useArticles } from "../../content/ArticlesContext";
+import { formatDate, getHeadings, readingMinutes, textToBody } from "../../content/articles";
+import { ApiError, getArticle, listArticles } from "../../api/content";
+import type { Article, ArticleListItem } from "../../types/api";
 
 export default function ArticlePage() {
-  const { slug } = useParams<{ slug: string }>();
-  const { articles } = useArticles();
-  const published = articles.filter((a) => a.status === "published");
-  const article = published.find((a) => a.slug === slug);
+  const { slug = "" } = useParams<{ slug: string }>();
+  // Keyed so moving to another article starts from a clean loading state.
+  return <ArticleView key={slug} slug={slug} />;
+}
 
-  if (!article) {
+function ArticleView({ slug }: { slug: string }) {
+  const [article, setArticle] = useState<Article | null>(null);
+  const [others, setOthers] = useState<ArticleListItem[]>([]);
+  const [failure, setFailure] = useState<"not-found" | "error" | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getArticle(slug)
+      .then((a) => alive && setArticle(a))
+      .catch((err) => {
+        if (alive) setFailure(err instanceof ApiError && err.status === 404 ? "not-found" : "error");
+      });
+    listArticles()
+      .then((list) => alive && setOthers(list ?? []))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [slug]);
+
+  if (failure === "error") {
+    return (
+      <PageShell title="Something went wrong" width="sm" center>
+        <Card className="flex flex-col items-center gap-4 p-8 text-center">
+          <p className="text-charcoal/70">We couldn't load this article. Please try again.</p>
+          <Button to="/articles">Browse all articles</Button>
+        </Card>
+      </PageShell>
+    );
+  }
+
+  if (failure === "not-found") {
     return (
       <PageShell title="Article not found" width="sm" center>
         <Card className="flex flex-col items-center gap-4 p-8 text-center">
@@ -32,9 +60,22 @@ export default function ArticlePage() {
     );
   }
 
-  const headings = getHeadings(article.body);
+  if (!article) {
+    return (
+      <div className="mx-auto w-full max-w-6xl animate-pulse px-4 py-10 md:px-8 md:py-14">
+        <div className="flex max-w-3xl flex-col gap-4 lg:ml-[264px]">
+          <div className="h-4 w-24 rounded-full bg-trooper-black/10" />
+          <div className="h-12 w-3/4 rounded-full bg-trooper-black/10" />
+          <div className="mt-4 h-72 rounded-2xl border border-line bg-cream-50" />
+        </div>
+      </div>
+    );
+  }
+
+  const blocks = textToBody(article.body);
+  const headings = getHeadings(blocks);
   let headingIndex = 0;
-  const more = sortNewest(published.filter((a) => a.id !== article.id)).slice(0, 3);
+  const more = others.filter((a) => a.id !== article.id).slice(0, 3);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 md:px-8 md:py-14">
@@ -48,10 +89,10 @@ export default function ArticlePage() {
           </Link>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold">
             <span className="rounded-full bg-trooper-tan/35 px-2.5 py-1 uppercase tracking-[0.12em] text-trooper-amber">
-              {article.category}
+              {article.category.name}
             </span>
             <span className="text-charcoal/50">
-              {formatDate(article.date)} · {readingMinutes(article)} min read
+              {formatDate(article.date_published)} · {readingMinutes(article.body)} min read
             </span>
           </div>
           <h1 className="text-4xl leading-tight text-trooper-black md:text-6xl">
@@ -67,7 +108,7 @@ export default function ArticlePage() {
         />
 
         <article className="flex max-w-3xl flex-col gap-5 lg:col-start-2">
-          {article.body.map((block, i) => {
+          {blocks.map((block, i) => {
             if (block.type === "p") {
               return (
                 <p

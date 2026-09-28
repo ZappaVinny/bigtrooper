@@ -39,7 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error ?? "Login failed");
     }
-    setUser((await res.json()).user);
+    const loggedIn = (await res.json()).user;
+
+    // The login response doesn't include `admin`, so load the full user from /me.
+    const me = await apiFetch("/me");
+    setUser(me.ok ? await me.json() : loggedIn);
   }, []);
 
   const logout = useCallback(async () => {

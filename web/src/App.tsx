@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import { RequireAuth } from "./auth/RequireAuth";
 import { RequireAdmin } from "./auth/RequireAdmin";
-import { ArticlesProvider } from "./content/ArticlesProvider";
 import Layout from "./components/Layout";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -23,33 +22,31 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ArticlesProvider>
-          <Routes>
-            <Route
-              element={<Layout header={<Header />} footer={<Footer />} />}
-            >
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              {/* Public page a pet's QR tag links to */}
-              <Route path="/found/:code" element={<Found />} />
+        <Routes>
+          <Route
+            element={<Layout header={<Header />} footer={<Footer />} />}
+          >
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            {/* Public page a pet's QR tag links to */}
+            <Route path="/found/:code" element={<Found />} />
 
-              {/* Authed Routes */}
-              <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
-              <Route path="/pets" element={<RequireAuth><PetIndex /></RequireAuth>} />
-              <Route path="/pets/new" element={<RequireAuth><NewPet /></RequireAuth>} />
-              <Route path="/pets/:id/edit" element={<RequireAuth><EditPet /></RequireAuth>} />
-              <Route path="/articles" element={<ArticleIndex />} />
-              <Route path="/articles/:slug" element={<ArticlePage />} />
-              <Route path="/news" element={<Navigate to="/articles" replace />} />
+            {/* Authed Routes */}
+            <Route path="/account" element={<RequireAuth><Account /></RequireAuth>} />
+            <Route path="/pets" element={<RequireAuth><PetIndex /></RequireAuth>} />
+            <Route path="/pets/new" element={<RequireAuth><NewPet /></RequireAuth>} />
+            <Route path="/pets/:id/edit" element={<RequireAuth><EditPet /></RequireAuth>} />
+            <Route path="/articles" element={<ArticleIndex />} />
+            <Route path="/articles/:slug" element={<ArticlePage />} />
+            <Route path="/news" element={<Navigate to="/articles" replace />} />
 
-              {/* Admin (any logged-in user for now; see RequireAdmin) */}
-              <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
-              <Route path="/admin/articles/new" element={<RequireAdmin><ArticleEditor /></RequireAdmin>} />
-              <Route path="/admin/articles/:id" element={<RequireAdmin><ArticleEditor /></RequireAdmin>} />
-            </Route>
-          </Routes>
-        </ArticlesProvider>
+            {/* Admin only */}
+            <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+            <Route path="/admin/articles/new" element={<RequireAdmin><ArticleEditor /></RequireAdmin>} />
+            <Route path="/admin/articles/:slug" element={<RequireAdmin><ArticleEditor /></RequireAdmin>} />
+          </Route>
+        </Routes>
       </AuthProvider>
     </BrowserRouter>
   );

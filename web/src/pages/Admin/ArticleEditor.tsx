@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from "react";
+import { useEffect, useState, type SyntheticEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import PageShell from "../../components/PageShell";
@@ -16,18 +16,19 @@ import ModalHeader from "../../components/ModalHeader";
 import ModalBody from "../../components/ModalBody";
 import ModalFooter from "../../components/ModalFooter";
 import { ArrowLeftIcon, ExternalLinkIcon, TrashIcon } from "../../components/icons";
-import { useArticles } from "../../content/ArticlesContext";
 import {
-  bodyToText,
-  getHeadings,
-  readingMinutes,
-  slugify,
-  textToBody,
-  type Article,
-  type ArticleStatus,
-} from "../../content/articles";
+  ApiError,
+  adminGetArticle,
+  createArticle,
+  deleteArticle,
+  listCategories,
+  updateArticle,
+} from "../../api/content";
+import { getHeadings, readingMinutes, textToBody } from "../../content/articles";
+import type { Article, ArticleInput, Category } from "../../types/api";
 
-type Errors = Partial<Record<"title" | "slug" | "category" | "excerpt" | "body" | "date", string>>;
+type Errors = Partial<Record<"title" | "category" | "excerpt" | "body" | "date", string>>;
+type Status = "draft" | "published";
 
 function today() {
   const d = new Date();
@@ -35,27 +36,33 @@ function today() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-function Editor({ article }: { article?: Article }) {
-  const { articles, categories, saveArticle, deleteArticle } = useArticles();
+function Editor({
+  article,
+  categories,
+  onSaved,
+}: {
+  article: Article | null;
+  categories: Category[];
+  onSaved: (article: Article) => void;
+}) {
   const navigate = useNavigate();
-  const justCreated = Boolean((useLocation().state as { created?: boolean } | null)?.created);
+  const justSaved = Boolean((useLocation().state as { saved?: boolean } | null)?.saved);
 
   const [title, setTitle] = useState(article?.title ?? "");
-  const [slug, setSlug] = useState(article?.slug ?? "");
-  // New articles derive the slug from the title until it's edited by hand.
-  const [slugTouched, setSlugTouched] = useState(Boolean(article));
-  const [category, setCategory] = useState(article?.category ?? "");
-  const [status, setStatus] = useState<ArticleStatus>(article?.status ?? "draft");
-  const [date, setDate] = useState(article?.date ?? today());
+  const [categoryId, setCategoryId] = useState(article ? String(article.category.id) : "");
+  const [status, setStatus] = useState<Status>(article?.published ? "published" : "draft");
+  const [date, setDate] = useState(article?.date_published ?? today());
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? "");
-  const [bodyText, setBodyText] = useState(article ? bodyToText(article.body) : "");
+  const [bodyText, setBodyText] = useState(article?.body ?? "");
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-  const [saved, setSaved] = useState(justCreated);
+  const [formError, setFormError] = useState("");
+  const [saved, setSaved] = useState(justSaved);
+  const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const body = textToBody(bodyText);
-  const headings = getHeadings(body);
+  const headings = getHeadings(textToBody(bodyText));
   const words = bodyText.trim() ? bodyText.trim().split(/\s+/).length : 0;
   const isNew = !article;
 
@@ -66,54 +73,75 @@ function Editor({ article }: { article?: Article }) {
     };
   }
 
-  function handleTitle(v: string) {
-    setTitle(v);
-    if (!slugTouched) setSlug(slugify(v));
-    setSaved(false);
-  }
-
   function validate(): Errors {
     const next: Errors = {};
     if (!title.trim()) next.title = "Add a title.";
-    if (!slug) next.slug = "Add a URL slug.";
-    else if (slug !== slugify(slug)) next.slug = "Use lowercase letters, numbers, and dashes only.";
-    else if (articles.some((a) => a.slug === slug && a.id !== article?.id))
-      next.slug = "Another article already uses this URL.";
-    if (!category) next.category = "Choose a category.";
+    if (!categoryId) next.category = "Choose a category.";
     if (!date) next.date = "Pick a date.";
     if (!excerpt.trim()) next.excerpt = "Add a short summary for article cards.";
-    if (body.length === 0) next.body = "Write the article body.";
+    if (!bodyText.trim()) next.body = "Write the article body.";
     return next;
   }
 
-  function handleSave(e: SyntheticEvent<HTMLFormElement>) {
+  async function handleSave(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
+    setFormError("");
+    setSaved(false);
     const next = validate();
     setErrors(next);
-    setSaved(false);
     if (Object.keys(next).length > 0) return;
 
-    const result = saveArticle({
-      id: article?.id,
+    const input: ArticleInput = {
       title: title.trim(),
-      slug,
-      category,
-      status,
-      date,
       excerpt: excerpt.trim(),
-      body,
-    });
-    if (isNew) {
-      navigate(`/admin/articles/${result.id}`, { replace: true, state: { created: true } });
-    } else {
-      setSaved(true);
+      body: bodyText.trim(),
+      category_id: Number(categoryId),
+      published: status === "published",
+      date_published: date,
+    };
+
+    setSaving(true);
+    try {
+      const result = article ? await updateArticle(article.slug, input) : await createArticle(input);
+      if (!article || result.slug !== article.slug) {
+        // New article, or the title changed and the server gave it a new slug.
+        navigate(`/admin/articles/${result.slug}`, { replace: true, state: { saved: true } });
+      } else {
+        onSaved(result);
+        setSaved(true);
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.issue === "duplicate") {
+        setErrors({ title: "An article with this title already exists." });
+      } else if (err instanceof ApiError && err.issue === "not_found") {
+        setErrors({ category: "Choose a category." });
+      } else {
+        setFormError(err instanceof Error ? err.message : "Something went wrong.");
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
-  const saveLabel =
-    status === "draft"
+  async function handleDelete() {
+    if (!article) return;
+    setDeleting(true);
+    try {
+      await deleteArticle(article.slug);
+      navigate("/admin", { replace: true });
+    } catch (err) {
+      setConfirmDelete(false);
+      setFormError(err instanceof Error ? err.message : "Couldn't delete the article.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const saveLabel = saving
+    ? "Saving…"
+    : status === "draft"
       ? "Save draft"
-      : isNew || article?.status === "draft"
+      : isNew || !article?.published
         ? "Publish"
         : "Update article";
 
@@ -129,7 +157,7 @@ function Editor({ article }: { article?: Article }) {
           <ArrowLeftIcon width={16} height={16} /> Admin dashboard
         </Link>
       }
-      actions={article && <StatusBadge status={article.status} />}
+      actions={article && <StatusBadge published={article.published} />}
       width="xl"
     >
       <form
@@ -140,23 +168,13 @@ function Editor({ article }: { article?: Article }) {
         {/* Main: content */}
         <Card className="flex flex-col gap-5 p-6 sm:p-8">
           <FormField label="Title" error={errors.title}>
-            <TextInput placeholder="How to Train Your Dog" value={title} onChange={handleTitle} />
+            <TextInput placeholder="How to Train Your Dog" value={title} onChange={edited(setTitle)} />
           </FormField>
-
-          <FormField
-            label="URL slug"
-            hint={slug ? `bigtrooper.com/articles/${slug}` : "Generated from the title."}
-            error={errors.slug}
-          >
-            <TextInput
-              placeholder="how-to-train-your-dog"
-              value={slug}
-              onChange={(v) => {
-                setSlugTouched(true);
-                edited(setSlug)(v.toLowerCase().replace(/\s+/g, "-"));
-              }}
-            />
-          </FormField>
+          {article && (
+            <p className="-mt-3 text-xs text-charcoal/55">
+              Web address: bigtrooper.com/articles/{article.slug}
+            </p>
+          )}
 
           <FormField
             label="Summary"
@@ -180,8 +198,7 @@ function Editor({ article }: { article?: Article }) {
             />
           </FormField>
           <p className="-mt-2 text-xs font-semibold text-charcoal/50">
-            {words.toLocaleString("en-US")} words ·{" "}
-            {words ? readingMinutes({ body }) : 0} min read
+            {words.toLocaleString("en-US")} words · {words ? readingMinutes(bodyText) : 0} min read
           </p>
         </Card>
 
@@ -209,12 +226,20 @@ function Editor({ article }: { article?: Article }) {
               </p>
             </div>
 
-            <FormField label="Category" error={errors.category}>
+            <FormField
+              label="Category"
+              error={errors.category}
+              hint={categories.length === 0 ? "Add a category on the dashboard first." : undefined}
+            >
               <SelectInput
                 placeholder="Choose"
-                options={categories.map((c) => ({ label: c, value: c }))}
-                value={category}
-                onChange={edited(setCategory)}
+                options={categories.map((c) => ({
+                  label: c.name,
+                  value: String(c.id),
+                  description: c.description,
+                }))}
+                value={categoryId}
+                onChange={edited(setCategoryId)}
                 open={categoryOpen}
                 onOpenChange={setCategoryOpen}
               />
@@ -225,15 +250,16 @@ function Editor({ article }: { article?: Article }) {
             </FormField>
 
             {saved && <FormMessage tone="success">Saved.</FormMessage>}
+            {formError && <FormMessage>{formError}</FormMessage>}
             {Object.keys(errors).length > 0 && (
               <FormMessage>Fix the highlighted fields to save.</FormMessage>
             )}
 
             <div className="flex flex-col gap-2 border-t border-line pt-5">
-              <Button type="submit" fullWidth>
+              <Button type="submit" fullWidth disabled={saving}>
                 {saveLabel}
               </Button>
-              {article?.status === "published" && (
+              {article?.published && (
                 <Button
                   variant="outline"
                   to={`/articles/${article.slug}`}
@@ -295,14 +321,8 @@ function Editor({ article }: { article?: Article }) {
             <Button variant="ghost" onClick={() => setConfirmDelete(false)} className="text-trooper-black">
               Cancel
             </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                deleteArticle(article.id);
-                navigate("/admin", { replace: true });
-              }}
-            >
-              Delete article
+            <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete article"}
             </Button>
           </ModalFooter>
         </Modal>
@@ -311,23 +331,58 @@ function Editor({ article }: { article?: Article }) {
   );
 }
 
-export default function ArticleEditor() {
-  const { id } = useParams<{ id: string }>();
-  const { articles } = useArticles();
+function EditorLoader({ slug }: { slug?: string }) {
+  const [categories, setCategories] = useState<Category[] | null>(null);
+  const [article, setArticle] = useState<Article | null>(null);
+  const [failure, setFailure] = useState<"not-found" | "error" | null>(null);
 
-  if (!id) return <Editor key="new" />;
+  useEffect(() => {
+    let alive = true;
+    Promise.all([listCategories(), slug ? adminGetArticle(slug) : Promise.resolve(null)])
+      .then(([cats, art]) => {
+        if (!alive) return;
+        setArticle(art);
+        setCategories(cats ?? []);
+      })
+      .catch((err) => {
+        if (alive) setFailure(err instanceof ApiError && err.status === 404 ? "not-found" : "error");
+      });
+    return () => {
+      alive = false;
+    };
+  }, [slug]);
 
-  const article = articles.find((a) => a.id === Number(id));
-  if (!article) {
+  if (failure) {
     return (
-      <PageShell title="Article not found" width="sm" center>
+      <PageShell title={failure === "not-found" ? "Article not found" : "Something went wrong"} width="sm" center>
         <Card className="flex flex-col items-center gap-4 p-8 text-center">
-          <p className="text-charcoal/70">This article doesn't exist or was deleted.</p>
+          <p className="text-charcoal/70">
+            {failure === "not-found"
+              ? "This article doesn't exist or was deleted."
+              : "We couldn't load the editor. Please try again."}
+          </p>
           <Button to="/admin">Back to dashboard</Button>
         </Card>
       </PageShell>
     );
   }
-  // Keyed by id so switching articles resets the form.
-  return <Editor key={article.id} article={article} />;
+
+  if (!categories) {
+    return (
+      <PageShell width="xl">
+        <div className="grid animate-pulse grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="h-144 rounded-2xl border border-line bg-cream-50" />
+          <div className="h-80 rounded-2xl border border-line bg-cream-50" />
+        </div>
+      </PageShell>
+    );
+  }
+
+  return <Editor article={article} categories={categories} onSaved={setArticle} />;
+}
+
+export default function ArticleEditor() {
+  const { slug } = useParams<{ slug: string }>();
+  // Keyed so creating an article or renaming it (new slug) loads fresh.
+  return <EditorLoader key={slug ?? "new"} slug={slug} />;
 }

@@ -75,3 +75,43 @@ export type PetNew = {
   description: string;
   active: boolean;
 };
+
+export type Category = {
+  id: number;
+  name: string;
+  description: string;
+};
+
+export type ArticleListItem = {
+  id: number;
+  title: string;
+  excerpt: string;
+  date_published: string;
+  published: boolean;
+  category: Category;
+  slug: string;
+};
+
+export type Article = ArticleListItem & {
+  body: string;
+};
+
+export type ArticleInput = {
+  title: string;
+  excerpt: string;
+  body: string;
+  category_id: number;
+  published: boolean;
+  date_published: string;
+};
+
+export type CategoryInput = {
+  name: string;
+  description: string;
+};
+
+export type Statistics = {
+  articles: number;
+  pets: number;
+  users: number;
+};

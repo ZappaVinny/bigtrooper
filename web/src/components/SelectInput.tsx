@@ -150,10 +150,10 @@ export default function SelectInput({
                     selected && "bg-trooper-tan/35 font-semibold",
                   )}
                 >
-                  <span className="flex items-baseline gap-2">
+                  <span className="flex min-w-0 flex-col">
                     <span>{option.label}</span>
                     {option.description && (
-                      <span className="text-xs text-charcoal/60">
+                      <span className="text-xs font-normal leading-snug text-charcoal/60">
                         {option.description}
                       </span>
                     )}

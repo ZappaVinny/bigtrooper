@@ -1,8 +1,6 @@
-import type { ArticleStatus } from "../content/articles";
 import { cn } from "../lib/cn";
 
-export default function StatusBadge({ status }: { status: ArticleStatus }) {
-  const published = status === "published";
+export default function StatusBadge({ published }: { published: boolean }) {
   return (
     <span
       className={cn(

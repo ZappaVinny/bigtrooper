@@ -102,11 +102,11 @@ function AccountMenu() {
           <Link to="/account" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
             <UserIcon width={16} height={16} /> Account Settings
           </Link>
-          {/* TODO(is_admin): show only when user.admin once the API sets it
-              (matches the check in auth/RequireAdmin.tsx). */}
-          <Link to="/admin" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-            <DashboardIcon width={16} height={16} /> Admin Dashboard
-          </Link>
+          {user.admin && (
+            <Link to="/admin" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+              <DashboardIcon width={16} height={16} /> Admin Dashboard
+            </Link>
+          )}
           <div className="my-1 h-px bg-line" />
           <button
             type="button"
