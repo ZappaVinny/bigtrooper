@@ -1,8 +1,8 @@
 # BigTrooper API
 
-Reference for the Go API in `api/`. Routes are registered in
-[`api/cmd/server/main.go`](api/cmd/server/main.go); handlers live in
-[`api/internal/handlers/`](api/internal/handlers/). Configuration (database,
+Reference for the Go API in `srv/`. Routes are registered in
+[`srv/internal/api/router.go`](srv/internal/api/router.go); handlers live in
+[`srv/internal/api/handlers/`](srv/internal/api/handlers/), one package per area. Configuration (database,
 R2, cookies, CORS, proxies) is explained in [`.env.example`](.env.example).
 
 - **Base URL (dev):** `http://localhost:8080/api`
@@ -48,16 +48,15 @@ When a create, update or delete breaks a database rule, the response names the
 field and the problem:
 
 ```json
-{ "error": "Failed to create article", "field": "slug", "issue": "duplicate" }
+{ "error": "An article with this title already exists", "field": "title", "issue": "duplicate" }
 ```
 
-| Status | `issue` | Meaning |
+| Status | `issue` | Where |
 |---|---|---|
-| `409` | `duplicate` | Another row already has this value (e.g. same article slug or category name) |
-| `409` | `in_use` | Can't delete: other rows still use it (e.g. a category with articles) |
-| `400` | `not_found` | A referenced row doesn't exist (e.g. bad `category_id`) |
-| `400` | `required` | A required column was empty |
-| `400` | `invalid` | A check failed; `field` is the constraint name (e.g. `pets_type_check`) |
+| `409` | `duplicate` | Article title already used (`field: "title"`), category name taken (`field: "name"`) |
+| `409` | `in_use` | Deleting a category that articles still use (`field: "id"`) |
+| `400` | `not_found` | Article `category_id` doesn't exist (`field: "category_id"`) |
+| `400` | `invalid` | Pet `type` isn't Dog, Cat or Other (`field: "type"`) |
 
 Anything else is a plain `500`.
 
@@ -115,7 +114,7 @@ owned by someone else both return `404 pet not found`.
 | DELETE | `/pets/:id` | – | `200 { message }` (also deletes its photo) |
 
 - `type` must be `Dog`, `Cat`, or `Other`. Anything else returns
-  `400 { "field": "pets_type_check", "issue": "invalid" }`.
+  `400 { "field": "type", "issue": "invalid" }`.
 - `age` is required on create and must be `0` or more.
 
 **Pet object** (list items have the same fields minus `owner_id`, `code` and the timestamps)
@@ -168,7 +167,7 @@ never handles the file itself. The frontend does all three steps in
 - An unknown code and a paused tag (`active = false`) both return `404 tag not active`.
 - Only finder-safe fields are returned: never the owner, the pet's id or its code.
 - The report stub is marked `!FOUNDPET!` in
-  [`found.go`](api/internal/handlers/found.go). It should store the report and
+  [`found.go`](srv/internal/api/handlers/pets/found.go). It should store the report and
   notify the owner according to their preferences.
 
 ## Articles (public)
@@ -231,7 +230,7 @@ title changes.
 | DELETE | `/admin/articles/:slug` | – | `200 { message }` (soft delete: sets `deleted = true`) |
 
 - **Slug conflicts:** two live articles can't share a slug; you get
-  `409 { "field": "slug", "issue": "duplicate" }`. Deleted articles don't count,
+  `409 { "field": "title", "issue": "duplicate" }`. Deleted articles don't count,
   so their titles can be reused.
 - **Bad category:** an unknown `category_id` returns `400 not_found`.
 
@@ -239,5 +238,5 @@ title changes.
 
 | Feature | Endpoints | Marker |
 |---|---|---|
-| Found-pet reports | `POST /found/:code/report` (stub returns `501`) | `!FOUNDPET!` in `api/internal/handlers/found.go` and `web/src/api/found.ts` |
+| Found-pet reports | `POST /found/:code/report` (stub returns `501`) | `!FOUNDPET!` in `srv/internal/api/handlers/pets/found.go` and `web/src/api/found.ts` |
 | Tag (3D model) generation | `POST /pets/:id/tag` | `!QRTAG!` in `web/src/api/tags.ts` |

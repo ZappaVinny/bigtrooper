@@ -1,4 +1,4 @@
-package handlers
+package middleware
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ import (
 // limiter, so every route can have its own budget.
 //
 // The IP comes from c.ClientIP(), which only trusts forwarded headers from
-// the proxies configured in main.go (TRUSTED_PROXIES / TRUSTED_PLATFORM).
+// the proxies configured in router.go (TRUSTED_PROXIES / TRUSTED_PLATFORM).
 func RateLimit(perMinute, burst int) gin.HandlerFunc {
 	type client struct {
 		limiter  *rate.Limiter

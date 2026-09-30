@@ -1,4 +1,4 @@
-module github.com/ZappaVinny/bigtrooper/api
+module github.com/ZappaVinny/bigtrooper/srv
 
 go 1.26.3
 
