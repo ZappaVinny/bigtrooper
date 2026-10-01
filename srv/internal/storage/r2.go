@@ -22,8 +22,6 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-
-	"github.com/ZappaVinny/bigtrooper/srv/internal/config"
 )
 
 var (
@@ -47,14 +45,29 @@ type R2 struct {
 	publicURL string
 }
 
+// Settings for one bucket. main.go fills these from the R2_* env vars, once
+// per bucket.
+type Settings struct {
+	AccountID       string
+	AccessKeyID     string
+	SecretAccessKey string
+	Bucket          string
+	PublicURL       string
+}
+
+func (s Settings) configured() bool {
+	return s.AccountID != "" && s.AccessKeyID != "" && s.SecretAccessKey != "" &&
+		s.Bucket != "" && s.PublicURL != ""
+}
+
 // New builds an R2 client. When the settings are incomplete it still returns
 // a client, whose methods all fail with ErrNotConfigured, so the API can run
 // without uploads.
-func New(ctx context.Context, settings config.R2) (*R2, error) {
-	if !settings.Configured() {
+func New(ctx context.Context, settings Settings) (*R2, error) {
+	if !settings.configured() {
 		return &R2{}, nil
 	}
-	publicURL := settings.PublicURL
+	publicURL := strings.TrimRight(settings.PublicURL, "/")
 	// Without a scheme, browsers treat the URL as a path on our own site.
 	if !strings.HasPrefix(publicURL, "https://") && !strings.HasPrefix(publicURL, "http://") {
 		publicURL = "https://" + publicURL

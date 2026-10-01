@@ -2,6 +2,8 @@ package api
 
 import (
 	"log"
+	"os"
+	"strings"
 
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/handlers/admin"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/handlers/articles"
@@ -9,35 +11,34 @@ import (
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/handlers/health"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/handlers/pets"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/middleware"
-	"github.com/ZappaVinny/bigtrooper/srv/internal/config"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
-	"github.com/ZappaVinny/bigtrooper/srv/internal/service/email"
-	"github.com/ZappaVinny/bigtrooper/srv/internal/service/sms"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/storage"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 type Deps struct {
-	Config  config.Config
 	Queries *db.Queries
 	R2      *storage.R2
-	Email   email.Sender
-	SMS     sms.Sender
 }
 
 func NewRouter(d Deps) *gin.Engine {
 	r := gin.Default()
-	configureClientIP(r, d.Config)
+	configureClientIP(r)
+
+	origins := splitList(os.Getenv("CORS_ORIGINS"))
+	if len(origins) == 0 {
+		origins = []string{"http://localhost:5173"}
+	}
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     d.Config.CORSOrigins,
+		AllowOrigins:     origins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}))
 
-	authHandler := auth.New(d.Queries, d.Config.CookieSecure)
+	authHandler := auth.New(d.Queries)
 	petsHandler := pets.New(d.Queries, d.R2)
 	articlesHandler := articles.New(d.Queries)
 	adminHandler := admin.New(d.Queries)
@@ -99,11 +100,22 @@ func NewRouter(d Deps) *gin.Engine {
 //   - TRUSTED_PLATFORM=cloudflare: take the IP from Cloudflare's CF-Connecting-IP.
 //   - TRUSTED_PROXIES=ip,cidr,...: trust X-Forwarded-For only from these proxies.
 //   - Neither set: ignore forwarded headers and use the connecting IP (dev default).
-func configureClientIP(r *gin.Engine, cfg config.Config) {
-	if cfg.TrustedPlatform == "cloudflare" {
+func configureClientIP(r *gin.Engine) {
+	if strings.EqualFold(strings.TrimSpace(os.Getenv("TRUSTED_PLATFORM")), "cloudflare") {
 		r.TrustedPlatform = gin.PlatformCloudflare
 	}
-	if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
-		log.Fatalf("invalid TRUSTED_PROXIES %q: %v", cfg.TrustedProxies, err)
+	proxies := splitList(os.Getenv("TRUSTED_PROXIES"))
+	if err := r.SetTrustedProxies(proxies); err != nil {
+		log.Fatalf("invalid TRUSTED_PROXIES %q: %v", proxies, err)
 	}
+}
+
+func splitList(value string) []string {
+	var items []string
+	for _, item := range strings.Split(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			items = append(items, item)
+		}
+	}
+	return items
 }

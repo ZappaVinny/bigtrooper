@@ -56,28 +56,31 @@ type FoundReportRequest struct {
 }
 
 func (h *Handler) ReportFound(c *gin.Context) {
-	var req FoundReportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("found report: bad request: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-	hasEmail := req.Email != nil && *req.Email != ""
-	hasPhone := req.PhoneNumber != nil && *req.PhoneNumber != ""
-	if !hasEmail && !hasPhone {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "email or phone_number required"})
-		return
-	}
 
-	pet, ok := h.activePetByCode(c)
-	if !ok {
-		return
-	}
+	c.JSON(http.StatusOK, gin.H{"message": "report sent"})
 
-	// !FOUNDPET! STUB: store the report (pet.ID, req.Email,
-	// req.PhoneNumber, req.Location) and notify the owner (pet.OwnerID)
-	// by email and/or SMS according to their users.preferences. Then
-	// respond 201 {"message": "report sent"}.
-	_ = pet
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "reporting isn't available yet"})
+	// var req FoundReportRequest
+	// if err := c.ShouldBindJSON(&req); err != nil {
+	// 	log.Printf("found report: bad request: %v", err)
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+	// 	return
+	// }
+	// hasEmail := req.Email != nil && *req.Email != ""
+	// hasPhone := req.PhoneNumber != nil && *req.PhoneNumber != ""
+	// if !hasEmail && !hasPhone {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "email or phone_number required"})
+	// 	return
+	// }
+
+	// pet, ok := h.activePetByCode(c)
+	// if !ok {
+	// 	return
+	// }
+
+	// // !FOUNDPET! STUB: store the report (pet.ID, req.Email,
+	// // req.PhoneNumber, req.Location) and notify the owner (pet.OwnerID)
+	// // by email and/or SMS according to their users.preferences. Then
+	// // respond 201 {"message": "report sent"}.
+	// _ = pet
+	// c.JSON(http.StatusNotImplemented, gin.H{"error": "reporting isn't available yet"})
 }

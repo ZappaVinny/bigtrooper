@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="color-scheme" content="light only" />
+    <title>{{.PetName}} has been found!</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5ebd9;
+      }
+      a {
+        text-decoration: none;
+      }
+      @media only screen and (max-width: 620px) {
+        .container {
+          width: 100% !important;
+        }
+        .px {
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+        }
+        .hero-title {
+          font-size: 34px !important;
+          line-height: 40px !important;
+        }
+        .btn {
+          display: block !important;
+          width: 100% !important;
+          margin: 0 0 10px 0 !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f5ebd9">
+    <!-- Inbox preview text -->
+    <div
+      style="
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        color: #f5ebd9;
+      "
+    >
+      Good news: someone found {{.PetName}}!
+    </div>
+
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background-color: #f5ebd9"
+    >
+      <tr>
+        <td align="center" style="padding: 32px 12px">
+          <table
+            role="presentation"
+            class="container"
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="
+              width: 600px;
+              max-width: 600px;
+              background-color: #fbf6ec;
+              border-radius: 20px;
+              overflow: hidden;
+              border: 1px solid #e8dcc6;
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                align="center"
+                style="background-color: #1a1614; padding: 22px 24px"
+              >
+                <span
+                  style="
+                    font-family:
+                      &quot;DM Serif Display&quot;, Georgia,
+                      &quot;Times New Roman&quot;, serif;
+                    font-size: 30px;
+                    line-height: 34px;
+                    color: #fbf6ec;
+                    letter-spacing: -0.5px;
+                  "
+                  >BigTrooper</span
+                >
+              </td>
+            </tr>
+
+            <!-- Hero -->
+            <tr>
+              <td
+                align="center"
+                style="background-color: #c9a572; padding: 36px 24px 36px 24px"
+              >
+                <span
+                  style="
+                    display: inline-block;
+                    background-color: #1a1614;
+                    color: #fbf6ec;
+                    font-family: Nunito, Arial, Helvetica, sans-serif;
+                    font-size: 12px;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    padding: 7px 14px;
+                    border-radius: 999px;
+                  "
+                  >Good news</span
+                >
+                <h1
+                  class="hero-title"
+                  style="
+                    margin: 18px 0 0 0;
+                    font-family:
+                      &quot;DM Serif Display&quot;, Georgia,
+                      &quot;Times New Roman&quot;, serif;
+                    font-weight: 400;
+                    font-size: 42px;
+                    line-height: 48px;
+                    color: #1a1614;
+                  "
+                >
+                  {{.PetName}} has been<br />reported found!
+                </h1>
+              </td>
+            </tr>
+
+            <!-- Intro -->
+            <tr>
+              <td
+                class="px"
+                style="
+                  padding: 36px 48px 8px 48px;
+                  font-family: Nunito, Arial, Helvetica, sans-serif;
+                  font-size: 17px;
+                  line-height: 27px;
+                  color: #3d3733;
+                "
+              >
+                Hi {{.OwnerName}},<br /><br />
+                Someone just scanned
+                <strong style="color: #1a1614">{{.PetName}}'s</strong> tag and
+                let us know they've found him. Take a breath: the hardest part
+                is over. Here's everything they shared with us.
+              </td>
+            </tr>
+
+            <!-- Location (only when the finder shared it) -->
+            {{if .Finder.Location}}
+            <tr>
+              <td class="px" style="padding: 20px 48px 0 48px">
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    background-color: #f5ebd9;
+                    border-radius: 16px;
+                    border-left: 4px solid #b8651e;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 18px 22px">
+                      <p
+                        style="
+                          margin: 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 12px;
+                          font-weight: 800;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #b8651e;
+                        "
+                      >
+                        Where he was found
+                      </p>
+                      <p
+                        style="
+                          margin: 6px 0 0 0;
+                          font-family:
+                            &quot;DM Serif Display&quot;, Georgia,
+                            &quot;Times New Roman&quot;, serif;
+                          font-size: 22px;
+                          line-height: 28px;
+                          color: #1a1614;
+                        "
+                      >
+                        Near {{.Finder.Location}}
+                      </p>
+                      <p
+                        style="
+                          margin: 4px 0 0 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 13px;
+                          line-height: 20px;
+                          color: #3d3733;
+                          opacity: 0.75;
+                        "
+                      >
+                        An approximate area (about 1 km) shared by the finder.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            {{end}}
+
+            <!-- Finder contact -->
+            <tr>
+              <td class="px" style="padding: 28px 48px 0 48px">
+                <h2
+                  style="
+                    margin: 0;
+                    font-family:
+                      &quot;DM Serif Display&quot;, Georgia,
+                      &quot;Times New Roman&quot;, serif;
+                    font-weight: 400;
+                    font-size: 26px;
+                    line-height: 32px;
+                    color: #1a1614;
+                  "
+                >
+                  Get in touch with the finder
+                </h2>
+                <p
+                  style="
+                    margin: 8px 0 0 0;
+                    font-family: Nunito, Arial, Helvetica, sans-serif;
+                    font-size: 15px;
+                    line-height: 24px;
+                    color: #3d3733;
+                  "
+                >
+                  The person who found {{.PetName}} provided the following
+                  contact information:
+                </p>
+
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="
+                    margin-top: 16px;
+                    border: 1px solid #e8dcc6;
+                    border-radius: 16px;
+                    background-color: #ffffff;
+                  "
+                >
+                  {{if .Finder.Phone}}
+                  <!-- Phone (only when provided) -->
+                  <tr>
+                    <td
+                      style="
+                        padding: 16px 22px;
+                        border-bottom: 1px solid #efe5d3;
+                      "
+                    >
+                      <p
+                        style="
+                          margin: 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 12px;
+                          font-weight: 800;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #3d3733;
+                          opacity: 0.6;
+                        "
+                      >
+                        Phone
+                      </p>
+                      <a
+                        href="tel:{{.Finder.Phone}}"
+                        style="
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 18px;
+                          font-weight: 700;
+                          color: #1a1614;
+                        "
+                        >{{formatPhone .Finder.Phone}}</a
+                      >
+                    </td>
+                  </tr>
+                  {{end}}
+                  <!-- Email (only when provided) -->
+
+                  {{if .Finder.Email}}
+                  <tr>
+                    <td style="padding: 16px 22px">
+                      <p
+                        style="
+                          margin: 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 12px;
+                          font-weight: 800;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #3d3733;
+                          opacity: 0.6;
+                        "
+                      >
+                        Email
+                      </p>
+                      <a
+                        href="mailto:{{.Finder.Email}}"
+                        style="
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 18px;
+                          font-weight: 700;
+                          color: #1a1614;
+                        "
+                        >{{.Finder.Email}}</a
+                      >
+                    </td>
+                  </tr>
+                  {{end}}
+                </table>
+
+                <!-- Quick actions -->
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="margin-top: 20px"
+                >
+                  <tr>
+                    <td>
+                      {{if .Finder.Phone}}
+                      <a
+                        class="btn"
+                        href="tel:{{.Finder.Phone}}"
+                        style="
+                          display: inline-block;
+                          background-color: #c9a572;
+                          color: #1a1614;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          font-weight: 800;
+                          padding: 13px 26px;
+                          border-radius: 999px;
+                          margin-right: 8px;
+                          text-align: center;
+                        "
+                        >Call the finder</a
+                      >
+                      {{end}} {{if .Finder.Email}}
+                      <a
+                        class="btn"
+                        href="mailto:{{.Finder.Email}}?subject=You%20found%20{{.PetName}}!"
+                        style="
+                          display: inline-block;
+                          background-color: #1a1614;
+                          color: #fbf6ec;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          font-weight: 800;
+                          padding: 13px 26px;
+                          border-radius: 999px;
+                          text-align: center;
+                        "
+                        >Send an email</a
+                      >
+                      {{end}}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Next steps -->
+            <tr>
+              <td class="px" style="padding: 32px 48px 8px 48px">
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="border-top: 1px solid #e8dcc6"
+                >
+                  <tr>
+                    <td style="padding-top: 24px">
+                      <p
+                        style="
+                          margin: 0 0 12px 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 12px;
+                          font-weight: 800;
+                          letter-spacing: 1.5px;
+                          text-transform: uppercase;
+                          color: #b8651e;
+                        "
+                      >
+                        A few tips
+                      </p>
+                      <p
+                        style="
+                          margin: 0 0 10px 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          line-height: 23px;
+                          color: #3d3733;
+                        "
+                      >
+                        🐾&nbsp; Reach out soon. Finders are often keeping your
+                        pet safe until you arrive.
+                      </p>
+                      <p
+                        style="
+                          margin: 0 0 10px 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          line-height: 23px;
+                          color: #3d3733;
+                        "
+                      >
+                        🐾&nbsp; Meet somewhere public and bring a photo of
+                        {{.PetName}} just in case.
+                      </p>
+                      <p
+                        style="
+                          margin: 0;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          line-height: 23px;
+                          color: #3d3733;
+                        "
+                      >
+                        🐾&nbsp; Once he's home, a thank-you goes a long way.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Sign-off -->
+            <tr>
+              <td
+                class="px"
+                style="
+                  padding: 24px 48px 40px 48px;
+                  font-family: Nunito, Arial, Helvetica, sans-serif;
+                  font-size: 15px;
+                  line-height: 24px;
+                  color: #3d3733;
+                "
+              >
+                Here's to a happy reunion,<br />
+                <span
+                  style="
+                    font-family:
+                      &quot;DM Serif Display&quot;, Georgia,
+                      &quot;Times New Roman&quot;, serif;
+                    font-size: 20px;
+                    color: #1a1614;
+                  "
+                  >The BigTrooper team</span
+                >
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                align="center"
+                style="background-color: #1a1614; padding: 24px 32px"
+              >
+                <p
+                  style="
+                    margin: 0;
+                    font-family: Nunito, Arial, Helvetica, sans-serif;
+                    font-size: 12px;
+                    line-height: 19px;
+                    color: #fbf6ec;
+                    opacity: 0.6;
+                  "
+                >
+                  You're receiving this because a BigTrooper tag for one of your
+                  pets was scanned.<br />
+                  This is an automated message from a no-reply address, so
+                  replies aren't read.
+                </p>
+                <p
+                  style="
+                    margin: 12px 0 0 0;
+                    font-family: Nunito, Arial, Helvetica, sans-serif;
+                    font-size: 12px;
+                    line-height: 19px;
+                  "
+                >
+                  <a
+                    href="https://bigtrooper.com/account"
+                    style="color: #c9a572; font-weight: 700"
+                    >Notification settings</a
+                  >
+                  <span style="color: #fbf6ec; opacity: 0.4"
+                    >&nbsp;·&nbsp;</span
+                  >
+                  <a
+                    href="https://bigtrooper.com/pets"
+                    style="color: #c9a572; font-weight: 700"
+                    >Your pets</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
