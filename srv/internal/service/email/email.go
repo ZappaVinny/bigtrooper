@@ -20,16 +20,18 @@ import (
 //go:embed email.tpl.html
 var templateFiles embed.FS
 
-type FinderInformation struct {
+type EmailFinderInformation struct {
 	Location *string `json:"location,omitempty"`
 	Email    *string `json:"email,omitempty" binding:"required_without=Phone,email"`
 	Phone    *string `json:"phone,omitempty" binding:"required_without=Email"`
 }
-type FoundReport struct {
+type EmailFoundReport struct {
+	OwnerID    string
 	OwnerName  string
 	OwnerEmail string
 	PetName    string
-	Finder     FinderInformation
+	PetCode    string
+	Finder     EmailFinderInformation
 }
 
 var usPhone = regexp.MustCompile(`^\+1(\d{3})(\d{3})(\d{4})$`)
@@ -68,7 +70,7 @@ func SendEmail(ctx context.Context, to string, subject string, body string) erro
 
 }
 
-func SendReport(ctx context.Context, report FoundReport) error {
+func SendReport(ctx context.Context, report EmailFoundReport) error {
 	var err error
 	validate := validator.New()
 	tmpl, err := template.New("email.tpl.html").

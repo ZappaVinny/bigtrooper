@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
+	"github.com/ZappaVinny/bigtrooper/srv/internal/service/sms"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
@@ -57,6 +58,15 @@ type FoundReportRequest struct {
 
 func (h *Handler) ReportFound(c *gin.Context) {
 
+	userPhone := "+1XXXXXXXXXX"
+
+	sms.SendReport(c, sms.SMSFoundReport{
+		OwnerName:  "John Doe",
+		OwnerPhone: userPhone,
+		PetName:    "Buddy",
+		PetCode:    "PET456",
+	})
+
 	c.JSON(http.StatusOK, gin.H{"message": "report sent"})
 
 	// var req FoundReportRequest
@@ -83,4 +93,10 @@ func (h *Handler) ReportFound(c *gin.Context) {
 	// // respond 201 {"message": "report sent"}.
 	// _ = pet
 	// c.JSON(http.StatusNotImplemented, gin.H{"error": "reporting isn't available yet"})
+}
+
+func (h *Handler) FoundInfo(c *gin.Context) {
+
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "reporting isn't available yet"})
+
 }

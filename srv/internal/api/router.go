@@ -68,7 +68,7 @@ func NewRouter(d Deps) *gin.Engine {
 		protected.GET("/pets/:id", petsHandler.Get)
 		protected.PATCH("/pets/:id", petsHandler.Update)
 		protected.DELETE("/pets/:id", petsHandler.Delete)
-
+		protected.GET("/pets/:id/found", petsHandler.FoundInfo) //Pet Finder Info
 		protected.POST("/pets/:id/image/upload-url", petsHandler.RequestImageUpload)
 		protected.PUT("/pets/:id/image", petsHandler.ConfirmImage)
 		protected.DELETE("/pets/:id/image", petsHandler.DeleteImage)
