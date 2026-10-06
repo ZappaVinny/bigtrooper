@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"html/template"
 	"log"
@@ -54,7 +55,7 @@ func SendEmail(ctx context.Context, to string, subject string, body string) erro
 	client := cloudflare.NewClient(
 		option.WithAPIToken(token),
 	)
-	response, err := client.EmailSending.Send(ctx, email_sending.EmailSendingSendParams{
+	_, err := client.EmailSending.Send(ctx, email_sending.EmailSendingSendParams{
 		AccountID: cloudflare.F(accountID),
 		From:      cloudflare.F[email_sending.EmailSendingSendParamsFromUnion](shared.UnionString(emailFrom)),
 		To:        cloudflare.F[email_sending.EmailSendingSendParamsToUnion](shared.UnionString(to)),
@@ -63,9 +64,8 @@ func SendEmail(ctx context.Context, to string, subject string, body string) erro
 		Text:      cloudflare.F("PLACEHOLDER FOR NOW"),
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
-	fmt.Printf("Email sent successfully! Message ID: %s\n", response)
 	return nil
 
 }
@@ -89,15 +89,21 @@ func SendReport(ctx context.Context, report EmailFoundReport) error {
 		return err
 	}
 
-	flags := os.Getenv("EMAIL_FLAG")
-	if flags == "true" {
-		SendEmail(ctx, report.OwnerEmail, fmt.Sprintf("Found your pet %s", report.PetName), buf.String())
-		log.Printf("found report: send email to %s", report.OwnerEmail)
-	} else {
-		log.Printf("found report (Email Attempted): email sending disabled by EMAIL_FLAG env var")
+	if os.Getenv("EMAIL_FLAG") != "true" {
+		return errors.New("email sending disabled by EMAIL_FLAG")
 	}
 
-	return err
+	if err := SendEmail(
+		ctx,
+		report.OwnerEmail,
+		fmt.Sprintf("Found your pet %s", report.PetName),
+		buf.String(),
+	); err != nil {
+		return fmt.Errorf("send email: %w", err)
+	}
+
+	log.Printf("found report: sent email to %s", report.OwnerEmail)
+	return nil
 }
 
 // info := FinderInformation{

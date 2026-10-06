@@ -5,6 +5,8 @@
 package db
 
 import (
+	"net/netip"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -42,6 +44,20 @@ type Pet struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	ImageKey    pgtype.Text        `json:"image_key"`
+}
+
+type Report struct {
+	ID              int32              `json:"id"`
+	PetID           int32              `json:"pet_id"`
+	OwnerNotified   pgtype.Bool        `json:"owner_notified"`
+	OwnerID         int32              `json:"owner_id"`
+	FinderPhone     pgtype.Text        `json:"finder_phone"`
+	FinderEmail     pgtype.Text        `json:"finder_email"`
+	FinderIp        *netip.Addr        `json:"finder_ip"`
+	FinderLatitude  pgtype.Float8      `json:"finder_latitude"`
+	FinderLongitude pgtype.Float8      `json:"finder_longitude"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Session struct {

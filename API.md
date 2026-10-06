@@ -37,7 +37,7 @@ Some public routes are limited per client IP. Going over the limit returns
 | `POST /login` | 10 / minute (bursts of 5) |
 | `POST /signup` | 5 / minute (bursts of 3) |
 | `GET /found/:code` | 30 / minute (bursts of 10) |
-| `POST /found/:code/report` | 5 / minute (bursts of 3) |
+| `POST /found/:code` | 5 / minute (bursts of 3) |
 
 The client IP only comes from proxy headers you've told the API to trust
 (`TRUSTED_PLATFORM` / `TRUSTED_PROXIES` in `.env`).
@@ -162,13 +162,22 @@ never handles the file itself. The frontend does all three steps in
 | Method | Path | Body | Success |
 |---|---|---|---|
 | GET | `/found/:code` | – | `200 { name, type, age, description, image_url }` |
-| POST | `/found/:code/report` | `{ "email": … \| null, "phone_number": … \| null, "location": { "lat", "lng" } \| null }` (email or phone required) | **Not built yet:** validates, then returns `501` |
+| POST | `/found/:code` | `{ "email": … \| null, "phone": … \| null, "location": { "lat", "lng" } \| null }` (email or phone required) | `200 { "message": "report received" }` |
 
 - An unknown code and a paused tag (`active = false`) both return `404 tag not active`.
 - Only finder-safe fields are returned: never the owner, the pet's id or its code.
-- The report stub is marked `!FOUNDPET!` in
-  [`found.go`](srv/internal/api/handlers/pets/found.go). It should store the report and
-  notify the owner according to their preferences.
+- Finder phone numbers must use US E.164 format: `+1` followed by 10 digits.
+- Latitude must be between `-90` and `90`; longitude must be between `-180`
+  and `180`.
+- Reports are stored before notifications are attempted. `owner_notified` is
+  set when at least one enabled notification channel succeeds.
+- Email and SMS are sent concurrently according to the owner's preferences.
+  Each delivery attempt uses `NOTIFICATION_TIMEOUT` (`10s` by default).
+- Finder coordinates are converted to a city, province and country for email.
+  If reverse geocoding fails, the email is still sent without a location.
+- SMS messages link to `SITE_URL/pets/<code>/found`.
+- Notification failures are logged but still return `200` once the report has
+  been stored. A database failure returns `500 Unable to create report`.
 
 ## Articles (public)
 
@@ -238,5 +247,4 @@ title changes.
 
 | Feature | Endpoints | Marker |
 |---|---|---|
-| Found-pet reports | `POST /found/:code/report` (stub returns `501`) | `!FOUNDPET!` in `srv/internal/api/handlers/pets/found.go` and `web/src/api/found.ts` |
 | Tag (3D model) generation | `POST /pets/:id/tag` | `!QRTAG!` in `web/src/api/tags.ts` |

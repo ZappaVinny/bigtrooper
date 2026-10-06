@@ -52,7 +52,7 @@ func NewRouter(d Deps) *gin.Engine {
 		public.GET("/articles/:slug", articlesHandler.Get)
 
 		public.GET("/found/:code", middleware.RateLimit(30, 10), petsHandler.GetFound)
-		public.POST("/found/:code/report", middleware.RateLimit(5, 3), petsHandler.ReportFound)
+		public.POST("/found/:code", middleware.RateLimit(5, 3), petsHandler.ReportFound)
 	}
 
 	protected := r.Group("/api/")

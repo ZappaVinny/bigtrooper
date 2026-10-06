@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"embed"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"text/template"
+	"time"
 
 	"github.com/twilio/twilio-go"
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
@@ -21,7 +22,7 @@ type SMSFoundReport struct {
 	OwnerName  string
 	OwnerPhone string
 	PetName    string
-	PetCode    string
+	FoundURL   string
 }
 
 func SendSMS(ctx context.Context, to string, body string) error {
@@ -33,20 +34,24 @@ func SendSMS(ctx context.Context, to string, body string) error {
 		Username: accountSid,
 		Password: authToken,
 	})
+	if deadline, ok := ctx.Deadline(); ok {
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
+			return ctx.Err()
+		}
+		client.SetTimeout(remaining)
+	}
 
 	params := &twilioApi.CreateMessageParams{}
 	params.SetTo(to)
 	params.SetFrom(fromNumber)
 	params.SetBody(body)
 
-	resp, err := client.Api.CreateMessage(params)
+	_, err := client.Api.CreateMessage(params)
 	if err != nil {
-		fmt.Println("Error sending SMS message: " + err.Error())
-	} else {
-		response, _ := json.Marshal(*resp)
-		fmt.Println("Response: " + string(response))
+		return err
 	}
-	return err
+	return nil
 }
 
 func SendReport(ctx context.Context, report SMSFoundReport) error {
@@ -61,13 +66,14 @@ func SendReport(ctx context.Context, report SMSFoundReport) error {
 		return err
 	}
 
-	flags := os.Getenv("SMS_FLAG")
-	if flags == "true" {
-		SendSMS(ctx, report.OwnerPhone, buf.String())
-		log.Printf("found report: send sms to %s", report.OwnerPhone)
-	} else {
-		log.Printf("found report (SMS Attempted): sms sending disabled by EMAIL_FLAG env var")
+	if os.Getenv("SMS_FLAG") != "true" {
+		return errors.New("SMS sending disabled by SMS_FLAG")
 	}
 
-	return err
+	if err := SendSMS(ctx, report.OwnerPhone, buf.String()); err != nil {
+		return fmt.Errorf("send SMS: %w", err)
+	}
+
+	log.Printf("found report: sent SMS to %s", report.OwnerPhone)
+	return nil
 }
