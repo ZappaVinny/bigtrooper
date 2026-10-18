@@ -43,6 +43,7 @@ func NewRouter(d Deps) *gin.Engine {
 	articlesHandler := articles.New(d.Queries)
 	adminHandler := admin.New(d.Queries)
 
+	//Public Routes
 	public := r.Group("/api/")
 	{
 		public.GET("/up", health.Status)
@@ -50,11 +51,11 @@ func NewRouter(d Deps) *gin.Engine {
 		public.POST("/signup", middleware.RateLimit(5, 3), authHandler.Signup)
 		public.GET("/articles", articlesHandler.List)
 		public.GET("/articles/:slug", articlesHandler.Get)
-
 		public.GET("/found/:code", middleware.RateLimit(30, 10), petsHandler.GetFound)
 		public.POST("/found/:code", middleware.RateLimit(5, 3), petsHandler.ReportFound)
 	}
 
+	//Logged-in Routes
 	protected := r.Group("/api/")
 	protected.Use(middleware.AuthRequired(d.Queries))
 	{
@@ -68,12 +69,14 @@ func NewRouter(d Deps) *gin.Engine {
 		protected.GET("/pets/:id", petsHandler.Get)
 		protected.PATCH("/pets/:id", petsHandler.Update)
 		protected.DELETE("/pets/:id", petsHandler.Delete)
-		protected.GET("/pets/:id/found", petsHandler.FoundInfo) //Pet Finder Info
 		protected.POST("/pets/:id/image/upload-url", petsHandler.RequestImageUpload)
 		protected.PUT("/pets/:id/image", petsHandler.ConfirmImage)
 		protected.DELETE("/pets/:id/image", petsHandler.DeleteImage)
+
+		protected.GET("/pets/:id/found", petsHandler.FoundInfo) //Pet Finder Info
 	}
 
+	//Admin Routes
 	adminGroup := r.Group("/api/admin/")
 	adminGroup.Use(middleware.AuthRequired(d.Queries), middleware.AdminRequired())
 	{

@@ -66,8 +66,8 @@ func SendReport(ctx context.Context, report SMSFoundReport) error {
 		return err
 	}
 
-	if os.Getenv("SMS_FLAG") != "true" {
-		return errors.New("SMS sending disabled by SMS_FLAG")
+	if os.Getenv("SMS_ON_FLAG") != "true" {
+		return errors.New("SMS sending disabled by SMS_ON_FLAG")
 	}
 
 	if err := SendSMS(ctx, report.OwnerPhone, buf.String()); err != nil {

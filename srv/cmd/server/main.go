@@ -11,6 +11,7 @@ import (
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/config"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
+	"github.com/ZappaVinny/bigtrooper/srv/internal/service/geo"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/storage"
 )
 
@@ -36,6 +37,17 @@ func main() {
 	if !r2.Enabled() {
 		log.Println("R2_* env vars not set; pet photo uploads are disabled")
 	}
+
+	// Build the reverse geocoder (~7s) in the background so the server starts
+	// right away and found reports don't pay the load time.
+	go func() {
+		start := time.Now()
+		if err := geo.Load(); err != nil {
+			log.Printf("reverse geocoder: %v; found-report emails will omit location", err)
+			return
+		}
+		log.Printf("reverse geocoder ready in %s", time.Since(start).Round(time.Millisecond))
+	}()
 
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)

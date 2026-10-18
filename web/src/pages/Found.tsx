@@ -9,10 +9,12 @@ import FormMessage from "../components/FormMessage";
 import TextInput from "../components/TextInput";
 import PhoneInput from "../components/PhoneInput";
 import Checkbox from "../components/Checkbox";
-import { CheckIcon, PawIcon } from "../components/icons";
+import { ArrowRightIcon, CheckIcon, PawIcon } from "../components/icons";
 import DefaultPet from "../assets/default-pet.svg";
+import { formatPhoneForDisplay } from "../lib/phone";
 import {
   FoundPetNotFoundError,
+  ReportFoundError,
   getFoundPet,
   reportFound,
   type FoundPet,
@@ -63,11 +65,36 @@ function PetProfile({ pet }: { pet: FoundPet }) {
   );
 }
 
-function ReportForm({ code, pet, onDone }: { code: string; pet: FoundPet; onDone: () => void }) {
+function reportErrorMessage(err: unknown, petName: string) {
+  if (!(err instanceof ReportFoundError)) {
+    return "We couldn't send your report. Please check your connection and try again.";
+  }
+  switch (err.status) {
+    case 400:
+      return "Something in your details didn't look right. Please check them and try again.";
+    case 404:
+      return `${petName}'s tag is no longer active, so we couldn't reach their owner.`;
+    case 429:
+      return "Too many reports were sent from this device. Please wait a minute and try again.";
+    default:
+      return "We couldn't send your report. Please try again in a moment.";
+  }
+}
+
+function ReportForm({
+  code,
+  pet,
+  onDone,
+}: {
+  code: string;
+  pet: FoundPet;
+  onDone: (report: FoundReport) => void;
+}) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState<LocationState>({ status: "off" });
-  const [errors, setErrors] = useState<{ email?: string; phone?: string }>({});
+  const [agreed, setAgreed] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; phone?: string; agreed?: string }>({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -98,22 +125,23 @@ function ReportForm({ code, pet, onDone }: { code: string; pet: FoundPet; onDone
       if (email && !/\S+@\S+\.\S+/.test(email)) next.email = "Enter a valid email address.";
       if (phone && phone.length !== 12) next.phone = "Enter a 10-digit phone number.";
     }
+    if (!agreed) next.agreed = "Please agree before sending your report.";
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
     const report: FoundReport = {
       email: email || null,
-      phone_number: phone || null,
+      phone: phone || null,
       location: location.status === "on" ? { lat: location.lat, lng: location.lng } : null,
     };
 
     setSubmitting(true);
     try {
       await reportFound(code, report);
-      onDone();
+      onDone(report);
     } catch (err) {
       console.error(err);
-      setSubmitError("We couldn't send your report. Please check your connection and try again.");
+      setSubmitError(reportErrorMessage(err, pet.name));
     } finally {
       setSubmitting(false);
     }
@@ -129,8 +157,34 @@ function ReportForm({ code, pet, onDone }: { code: string; pet: FoundPet; onDone
           : "Helps the owner know where to look. Only a general area is shared.";
 
   return (
-    <Card className="p-6 sm:p-8">
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+    <Card className="relative overflow-hidden p-6 sm:p-8">
+      {/* Covers the form while sending so the wait (notifications go out before
+          the API answers) reads as progress. The form stays mounted underneath,
+          so the finder's details are kept if sending fails. */}
+      {submitting && (
+        <div
+          role="status"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-cream-50/90 px-6 text-center backdrop-blur-sm"
+        >
+          <span className="grid h-14 w-14 animate-pulse place-items-center rounded-full bg-trooper-tan/25 text-trooper-black">
+            <PawIcon width={28} height={28} />
+          </span>
+          <div>
+            <p className="text-2xl text-trooper-black">Sending your report…</p>
+            <p className="mt-1 text-sm text-charcoal/65">
+              Letting {pet.name}'s owner know. This can take a few seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        aria-busy={submitting}
+        inert={submitting}
+        className="flex flex-col gap-5"
+      >
         <div>
           <h2 className="text-3xl text-trooper-black">Let {pet.name}'s owner know</h2>
           <p className="mt-1 text-sm text-charcoal/65">
@@ -162,10 +216,25 @@ function ReportForm({ code, pet, onDone }: { code: string; pet: FoundPet; onDone
           className="rounded-xl border border-line bg-cream/50 p-4"
         />
 
-        <p className="text-xs leading-relaxed text-charcoal/60">
-          By submitting, your contact information{location.status === "on" && " and general location"}{" "}
-          may be given to {pet.name}'s owner so they can reach out to you.
-        </p>
+        {/* TODO: link the Terms of Service and Privacy Policy here once those pages exist. */}
+        <div className="flex flex-col gap-1.5">
+          <Checkbox
+            label={`I agree to share my details with ${pet.name}'s owner`}
+            description={
+              <>
+                Your contact information{location.status === "on" && " and general location"} will
+                be sent to {pet.name}'s owner so they can reach you. We also store your IP address
+                to help prevent abuse.
+              </>
+            }
+            checked={agreed}
+            onChange={(checked) => {
+              setAgreed(checked);
+              if (checked) setErrors((prev) => ({ ...prev, agreed: undefined }));
+            }}
+          />
+          {errors.agreed && <p className="text-xs text-danger">{errors.agreed}</p>}
+        </div>
 
         <Button
           type="submit"
@@ -185,7 +254,7 @@ export default function Found() {
   const { code = "" } = useParams<{ code: string }>();
   const [pet, setPet] = useState<FoundPet | null>(null);
   const [failure, setFailure] = useState<"not-found" | "error" | null>(null);
-  const [reported, setReported] = useState(false);
+  const [reported, setReported] = useState<FoundReport | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -238,11 +307,26 @@ export default function Found() {
           <span className="grid h-14 w-14 place-items-center rounded-full bg-success/15 text-success">
             <CheckIcon width={28} height={28} strokeWidth={2.5} />
           </span>
-          <h1 className="text-4xl text-trooper-black">Thank you!</h1>
+          <h1 className="text-4xl text-trooper-black">Report sent!</h1>
           <p className="max-w-sm leading-relaxed text-charcoal/75">
             {pet.name}'s owner has been notified and may reach out to you soon.
             If you can, keep {pet.name} somewhere safe until they do.
           </p>
+
+          <div className="mt-2 w-full rounded-xl border border-line bg-cream/50 p-4 text-left">
+            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-charcoal/60">
+              Shared with the owner
+            </p>
+            <ul className="mt-2 flex flex-col gap-1 text-sm font-semibold text-charcoal/80">
+              {reported.email && <li>{reported.email}</li>}
+              {reported.phone && <li>{formatPhoneForDisplay(reported.phone)}</li>}
+              {reported.location && <li>Your general area (about 1 km)</li>}
+            </ul>
+          </div>
+
+          <Button to="/" variant="dark" icon={<ArrowRightIcon />} className="mt-2">
+            Learn about BigTrooper
+          </Button>
         </Card>
       </PageShell>
     );
@@ -259,7 +343,7 @@ export default function Found() {
         <div className="lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
           <PetProfile pet={pet} />
         </div>
-        <ReportForm code={code} pet={pet} onDone={() => setReported(true)} />
+        <ReportForm code={code} pet={pet} onDone={setReported} />
       </div>
     </PageShell>
   );

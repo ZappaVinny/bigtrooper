@@ -11,17 +11,16 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/types"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/service/email"
+	"github.com/ZappaVinny/bigtrooper/srv/internal/service/geo"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/service/sms"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/sams96/rgeo"
 )
 
 type FoundPetObject struct {
@@ -32,12 +31,7 @@ type FoundPetObject struct {
 	ImageURL    *string `json:"image_url"`
 }
 
-var (
-	foundGeocoderOnce sync.Once
-	foundGeocoder     *rgeo.Rgeo
-	foundGeocoderErr  error
-	finderPhone       = regexp.MustCompile(`^\+1\d{10}$`)
-)
+var finderPhone = regexp.MustCompile(`^\+1\d{10}$`)
 
 const defaultNotificationTimeout = 10 * time.Second
 
@@ -53,16 +47,6 @@ func notificationTimeout() time.Duration {
 		return defaultNotificationTimeout
 	}
 	return timeout
-}
-
-func getFoundGeocoder() (*rgeo.Rgeo, error) {
-	foundGeocoderOnce.Do(func() {
-		foundGeocoder, foundGeocoderErr = rgeo.New(rgeo.Provinces10, rgeo.Cities10)
-		if foundGeocoderErr == nil {
-			foundGeocoder.Build()
-		}
-	})
-	return foundGeocoder, foundGeocoderErr
 }
 
 // done
@@ -201,29 +185,11 @@ func (h *Handler) ReportFound(c *gin.Context) {
 	processEmail := func() error {
 		var finderLocation *string
 		if PetFinder.Location != nil {
-			geocoder, err := getFoundGeocoder()
+			locationName, err := geo.Describe(PetFinder.Location.Lat, PetFinder.Location.Lng)
 			if err != nil {
-				log.Printf("found report: initialize reverse geocoder: %v", err)
-			} else if location, err := geocoder.ReverseGeocode([]float64{
-				PetFinder.Location.Lng,
-				PetFinder.Location.Lat,
-			}); err != nil {
 				log.Printf("found report: reverse geocode finder location: %v", err)
-			} else {
-				locationParts := make([]string, 0, 3)
-				if location.City != "" {
-					locationParts = append(locationParts, location.City)
-				}
-				if location.Province != "" {
-					locationParts = append(locationParts, location.Province)
-				}
-				if location.Country != "" {
-					locationParts = append(locationParts, location.Country)
-				}
-
-				if locationName := strings.Join(locationParts, ", "); locationName != "" {
-					finderLocation = &locationName
-				}
+			} else if locationName != "" {
+				finderLocation = &locationName
 			}
 		}
 

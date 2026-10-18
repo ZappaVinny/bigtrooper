@@ -4,6 +4,6 @@ source .env
 set +a
 
 cd srv && go run ./cmd/server &
-cd web && npm run dev &
+cd web && npm run dev:https &
 
 wait

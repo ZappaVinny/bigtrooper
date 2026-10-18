@@ -10,12 +10,11 @@
 //                                 { name, type, age, description, image_url }.
 //                                 404 when the code is unknown or the tag is paused.
 //
-//   POST /api/found/:code/report  STUB. Validates the report, then answers
-//                                 501 until storing it and notifying the owner is
-//                                 built. Search !FOUNDPET! in found.go.
-//
-// Until the report endpoint is finished, submitting shows the page's normal
-// "couldn't send your report" error.
+//   POST /api/found/:code         IMPLEMENTED. Stores the finder's report and
+//                                 notifies the owner per their preferences.
+//                                 200 { message: "report received" }. 404 when the
+//                                 tag is unknown or paused, 400 on a bad body,
+//                                 429 when rate-limited.
 // =============================================================================
 
 import { apiFetch } from "./client";
@@ -30,7 +29,7 @@ export type FoundPet = {
 
 export type FoundReport = {
   email: string | null;
-  phone_number: string | null;
+  phone: string | null;
   location: { lat: number; lng: number } | null;
 };
 
@@ -49,11 +48,20 @@ export async function getFoundPet(code: string): Promise<FoundPet> {
   return res.json();
 }
 
-/** Sends the finder's report to the owner. */
+export class ReportFoundError extends Error {
+  status: number;
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.name = "ReportFoundError";
+    this.status = status;
+  }
+}
+
+/** Sends the finder's report to the owner. Throws ReportFoundError on a non-2xx. */
 export async function reportFound(code: string, report: FoundReport): Promise<void> {
-  const res = await apiFetch(`/found/${encodeURIComponent(code)}/report`, {
+  const res = await apiFetch(`/found/${encodeURIComponent(code)}`, {
     method: "POST",
     body: JSON.stringify(report),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new ReportFoundError(res.status);
 }

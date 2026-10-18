@@ -15,16 +15,18 @@ import (
 	"github.com/cloudflare/cloudflare-go/v6/email_sending"
 	"github.com/cloudflare/cloudflare-go/v6/option"
 	"github.com/cloudflare/cloudflare-go/v6/shared"
-	"github.com/go-playground/validator/v10"
 )
 
 //go:embed email.tpl.html
 var templateFiles embed.FS
 
+// EmailFinderInformation is display-only. The finder's input is validated by the
+// found handler before the report is stored, so it is never re-checked here: a
+// report the API accepted must always be able to reach the owner.
 type EmailFinderInformation struct {
 	Location *string `json:"location,omitempty"`
-	Email    *string `json:"email,omitempty" binding:"required_without=Phone,email"`
-	Phone    *string `json:"phone,omitempty" binding:"required_without=Email"`
+	Email    *string `json:"email,omitempty"`
+	Phone    *string `json:"phone,omitempty"`
 }
 type EmailFoundReport struct {
 	OwnerID    string
@@ -72,16 +74,10 @@ func SendEmail(ctx context.Context, to string, subject string, body string) erro
 
 func SendReport(ctx context.Context, report EmailFoundReport) error {
 	var err error
-	validate := validator.New()
 	tmpl, err := template.New("email.tpl.html").
 		Funcs(template.FuncMap{"formatPhone": formatPhone}).
 		ParseFS(templateFiles, "email.tpl.html")
 	if err != nil {
-		return err
-	}
-	validate.SetTagName("binding")
-	if err = validate.Struct(report.Finder); err != nil {
-		fmt.Println("invalid:", err)
 		return err
 	}
 	var buf bytes.Buffer
@@ -89,8 +85,8 @@ func SendReport(ctx context.Context, report EmailFoundReport) error {
 		return err
 	}
 
-	if os.Getenv("EMAIL_FLAG") != "true" {
-		return errors.New("email sending disabled by EMAIL_FLAG")
+	if os.Getenv("EMAIL_ON_FLAG") != "true" {
+		return errors.New("email sending disabled by EMAIL_ON_FLAG")
 	}
 
 	if err := SendEmail(
