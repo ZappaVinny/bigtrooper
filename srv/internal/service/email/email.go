@@ -34,6 +34,7 @@ type EmailFoundReport struct {
 	OwnerEmail string
 	PetName    string
 	PetCode    string
+	FoundURL   string
 	Finder     EmailFinderInformation
 }
 

@@ -17,6 +17,11 @@ SELECT *
 FROM reports
 WHERE id = $1;
 
+-- name: GetReportByPetId :one
+SELECT *
+FROM reports
+WHERE pet_id = $1;
+
 -- name: ListReports :many
 SELECT *
 FROM reports

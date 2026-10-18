@@ -101,6 +101,31 @@ func (q *Queries) GetReportById(ctx context.Context, id int32) (Report, error) {
 	return i, err
 }
 
+const getReportByPetId = `-- name: GetReportByPetId :one
+SELECT id, pet_id, owner_notified, owner_id, finder_phone, finder_email, finder_ip, finder_latitude, finder_longitude, created_at, updated_at
+FROM reports
+WHERE pet_id = $1
+`
+
+func (q *Queries) GetReportByPetId(ctx context.Context, petID int32) (Report, error) {
+	row := q.db.QueryRow(ctx, getReportByPetId, petID)
+	var i Report
+	err := row.Scan(
+		&i.ID,
+		&i.PetID,
+		&i.OwnerNotified,
+		&i.OwnerID,
+		&i.FinderPhone,
+		&i.FinderEmail,
+		&i.FinderIp,
+		&i.FinderLatitude,
+		&i.FinderLongitude,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listReports = `-- name: ListReports :many
 SELECT id, pet_id, owner_notified, owner_id, finder_phone, finder_email, finder_ip, finder_latitude, finder_longitude, created_at, updated_at
 FROM reports

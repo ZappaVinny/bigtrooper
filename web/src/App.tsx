@@ -12,6 +12,7 @@ import Account from "./pages/Account";
 import PetIndex from "./pages/Pets/index";
 import EditPet from "./pages/Pets/EditPet";
 import NewPet from "./pages/Pets/NewPet";
+import FoundReport from "./pages/Pets/FoundReport";
 import ArticleIndex from "./pages/Articles/index";
 import ArticlePage from "./pages/Articles/Article";
 import AdminDashboard from "./pages/Admin/index";
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/pets" element={<RequireAuth><PetIndex /></RequireAuth>} />
             <Route path="/pets/new" element={<RequireAuth><NewPet /></RequireAuth>} />
             <Route path="/pets/:id/edit" element={<RequireAuth><EditPet /></RequireAuth>} />
+            <Route path="/pets/:code/found" element={<RequireAuth><FoundReport /></RequireAuth>} />
             <Route path="/articles" element={<ArticleIndex />} />
             <Route path="/articles/:slug" element={<ArticlePage />} />
             <Route path="/news" element={<Navigate to="/articles" replace />} />

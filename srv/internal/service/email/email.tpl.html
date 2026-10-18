@@ -384,6 +384,39 @@
                     </td>
                   </tr>
                 </table>
+
+                {{if .FoundURL}}
+                <!-- Link to the owner's found page on the site -->
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  style="margin-top: 12px"
+                >
+                  <tr>
+                    <td>
+                      <a
+                        class="btn"
+                        href="{{.FoundURL}}"
+                        style="
+                          display: inline-block;
+                          background-color: transparent;
+                          color: #1a1614;
+                          font-family: Nunito, Arial, Helvetica, sans-serif;
+                          font-size: 15px;
+                          font-weight: 800;
+                          padding: 11.5px 24.5px;
+                          border: 1.5px solid #1a1614;
+                          border-radius: 999px;
+                          text-align: center;
+                        "
+                        >View details on site</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                {{end}}
               </td>
             </tr>
 

@@ -73,7 +73,7 @@ func NewRouter(d Deps) *gin.Engine {
 		protected.PUT("/pets/:id/image", petsHandler.ConfirmImage)
 		protected.DELETE("/pets/:id/image", petsHandler.DeleteImage)
 
-		protected.GET("/pets/:id/found", petsHandler.FoundInfo) //Pet Finder Info
+		protected.GET("/pets/:id/found", petsHandler.FoundInfo)
 	}
 
 	//Admin Routes

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ZappaVinny/bigtrooper/srv/internal/api/middleware"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/types"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/service/email"
@@ -166,9 +167,13 @@ func (h *Handler) ReportFound(c *gin.Context) {
 	requestContext := c.Request.Context()
 	timeout := notificationTimeout()
 
+	foundURL := ""
+	if siteURL := strings.TrimRight(strings.TrimSpace(os.Getenv("SITE_URL")), "/"); siteURL != "" {
+		foundURL = siteURL + "/pets/" + url.PathEscape(Pet.Code) + "/found"
+	}
+
 	processSMS := func() error {
-		siteURL := strings.TrimRight(strings.TrimSpace(os.Getenv("SITE_URL")), "/")
-		if siteURL == "" {
+		if foundURL == "" {
 			return errors.New("SITE_URL is not configured")
 		}
 
@@ -178,7 +183,7 @@ func (h *Handler) ReportFound(c *gin.Context) {
 			OwnerName:  PetOwner.FirstName,
 			OwnerPhone: PetOwner.PhoneNumber,
 			PetName:    Pet.Name,
-			FoundURL:   siteURL + "/pets/" + url.PathEscape(Pet.Code) + "/found",
+			FoundURL:   foundURL,
 		})
 	}
 
@@ -199,6 +204,7 @@ func (h *Handler) ReportFound(c *gin.Context) {
 			PetName:    Pet.Name,
 			OwnerName:  PetOwner.FirstName,
 			OwnerEmail: PetOwner.Email,
+			FoundURL:   foundURL,
 			Finder: email.EmailFinderInformation{
 				Location: finderLocation,
 				Email:    PetFinder.Email,
@@ -253,8 +259,81 @@ func (h *Handler) ReportFound(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "report received"})
 }
 
+type ReportInfoResponse struct {
+	PetName        string  `json:"pet_name"`
+	FinderEmail    *string `json:"finder_email,omitempty"`
+	FinderPhone    *string `json:"finder_phone,omitempty"`
+	FinderLocation *string `json:"finder_location,omitempty"`
+}
+
 func (h *Handler) FoundInfo(c *gin.Context) {
 
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "reporting isn't available yet"})
+	//source data
+	user, err := h.q.GetUserById(c, middleware.UserID(c))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to get user"})
+		return
+	}
+
+	Pet, err := h.q.GetPetByCode(c, c.Param("id"))
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !Pet.Active) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "tag not active"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to look up tag"})
+		return
+	}
+
+	PetOwner, err := h.q.GetUserById(c, Pet.OwnerID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to look up pet owner"})
+		return
+	}
+
+	report, err := h.q.GetReportByPetId(c, Pet.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no report found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to look up report"})
+		return
+	}
+
+	//Validation
+	if user.ID != PetOwner.ID && user.ID != report.OwnerID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "not authorized to view report"})
+		return
+	}
+
+	//Response
+	var finderLocation *string
+	var finderEmail *string
+	var finderPhone *string
+
+	if report.FinderLatitude.Valid && report.FinderLongitude.Valid {
+		locationName, err := geo.Describe(report.FinderLatitude.Float64, report.FinderLongitude.Float64)
+		if err != nil {
+			log.Printf("reverse geocode finder error: %v", err)
+		} else {
+			finderLocation = &locationName
+		}
+	}
+
+	if report.FinderPhone.Valid {
+		finderPhone = &report.FinderPhone.String
+	}
+
+	if report.FinderEmail.Valid {
+		finderEmail = &report.FinderEmail.String
+	}
+
+	c.JSON(http.StatusOK, ReportInfoResponse{
+		PetName:        Pet.Name,
+		FinderEmail:    finderEmail,
+		FinderPhone:    finderPhone,
+		FinderLocation: finderLocation,
+	})
 
 }

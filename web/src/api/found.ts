@@ -15,6 +15,11 @@
 //                                 200 { message: "report received" }. 404 when the
 //                                 tag is unknown or paused, 400 on a bad body,
 //                                 429 when rate-limited.
+//
+//   GET  /api/pets/:code/found    IMPLEMENTED. Owner-only finder details for the
+//                                 page the owner's SMS links to (/pets/:code/found).
+//                                 404 when there's no report or the tag is paused,
+//                                 403 when the pet belongs to another account.
 // =============================================================================
 
 import { apiFetch } from "./client";
@@ -31,6 +36,13 @@ export type FoundReport = {
   email: string | null;
   phone: string | null;
   location: { lat: number; lng: number } | null;
+};
+
+export type FoundReportInfo = {
+  pet_name: string;
+  finder_email?: string;
+  finder_phone?: string;
+  finder_location?: string;
 };
 
 export class FoundPetNotFoundError extends Error {
@@ -64,4 +76,11 @@ export async function reportFound(code: string, report: FoundReport): Promise<vo
     body: JSON.stringify(report),
   });
   if (!res.ok) throw new ReportFoundError(res.status);
+}
+
+/** Loads the finder report for one of the user's pets. Throws ReportFoundError on a non-2xx. */
+export async function getFoundReport(code: string): Promise<FoundReportInfo> {
+  const res = await apiFetch(`/pets/${encodeURIComponent(code)}/found`);
+  if (!res.ok) throw new ReportFoundError(res.status);
+  return res.json();
 }
