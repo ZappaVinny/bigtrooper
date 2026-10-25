@@ -16,12 +16,13 @@ import (
 )
 
 type Handler struct {
-	q  *db.Queries
-	r2 *storage.R2
+	q      *db.Queries
+	r2     *storage.R2
+	tagsR2 *storage.R2
 }
 
-func New(q *db.Queries, r2 *storage.R2) *Handler {
-	return &Handler{q: q, r2: r2}
+func New(q *db.Queries, r2 *storage.R2, tagsR2 *storage.R2) *Handler {
+	return &Handler{q: q, r2: r2, tagsR2: tagsR2}
 }
 
 type PetObject struct {
@@ -233,7 +234,13 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err := h.q.DeletePet(c, existingPet.ID)
+	tags, err := h.q.ListPetTags(c, existingPet.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete pet"})
+		return
+	}
+
+	err = h.q.DeletePet(c, existingPet.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to delete pet"})
 		return
@@ -241,6 +248,13 @@ func (h *Handler) Delete(c *gin.Context) {
 	if h.r2.Enabled() && existingPet.ImageKey.Valid {
 		if err := h.r2.Delete(c, existingPet.ImageKey.String); err != nil {
 			log.Printf("delete pet image %s: %v", existingPet.ImageKey.String, err)
+		}
+	}
+	if h.tagsR2.Enabled() {
+		for _, t := range tags {
+			if err := h.tagsR2.Delete(c, t.Key); err != nil {
+				log.Printf("delete pet tag %s: %v", t.Key, err)
+			}
 		}
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "pet deleted"})

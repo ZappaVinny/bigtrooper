@@ -3,13 +3,14 @@
 // The browser never gets R2 credentials: the server hands out short-lived
 // presigned PUT URLs, the browser uploads straight to R2, and the server
 // verifies the object before saving its key. Images are then served from the
-// bucket's public custom domain (R2_PUBLIC_URL).
+// bucket's public custom domain (R2_IMAGES_PUBLIC_URL).
 //
 // Every object in a bucket with a public domain is reachable by URL; files
 // that must stay private need a second, non-public bucket (a second R2).
 package storage
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -67,12 +68,6 @@ func New(ctx context.Context, settings Settings) (*R2, error) {
 	if !settings.configured() {
 		return &R2{}, nil
 	}
-	publicURL := strings.TrimRight(settings.PublicURL, "/")
-	// Without a scheme, browsers treat the URL as a path on our own site.
-	if !strings.HasPrefix(publicURL, "https://") && !strings.HasPrefix(publicURL, "http://") {
-		publicURL = "https://" + publicURL
-	}
-
 	cfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(settings.AccessKeyID, settings.SecretAccessKey, "")),
 		awsconfig.WithRegion("auto"), // required by the SDK, ignored by R2
@@ -93,8 +88,23 @@ func New(ctx context.Context, settings Settings) (*R2, error) {
 		client:    client,
 		presigner: s3.NewPresignClient(client),
 		bucket:    settings.Bucket,
-		publicURL: publicURL,
+		publicURL: normalizePublicURL(settings.PublicURL),
 	}, nil
+}
+
+func normalizePublicURL(publicURL string) string {
+	publicURL = strings.TrimRight(publicURL, "/")
+	// Without a scheme, browsers treat the URL as a path on our own site.
+	if !strings.HasPrefix(publicURL, "https://") && !strings.HasPrefix(publicURL, "http://") {
+		publicURL = "https://" + publicURL
+	}
+	return publicURL
+}
+
+func (r *R2) WithPublicURL(publicURL string) *R2 {
+	tagged := *r
+	tagged.publicURL = normalizePublicURL(publicURL)
+	return &tagged
 }
 
 // Enabled reports whether uploads are available.
@@ -138,6 +148,19 @@ func (r *R2) Head(ctx context.Context, key string) (size int64, contentType stri
 		return 0, "", err
 	}
 	return aws.ToInt64(out.ContentLength), aws.ToString(out.ContentType), nil
+}
+
+func (r *R2) Put(ctx context.Context, key, contentType string, body []byte) error {
+	if !r.Enabled() {
+		return ErrNotConfigured
+	}
+	_, err := r.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(r.bucket),
+		Key:         aws.String(key),
+		ContentType: aws.String(contentType),
+		Body:        bytes.NewReader(body),
+	})
+	return err
 }
 
 // Delete removes an object. Deleting a missing key is not an error.

@@ -1,0 +1,8 @@
+CREATE TABLE pet_tags (
+    id SERIAL PRIMARY KEY,
+    pet_id INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+    variant VARCHAR(50) NOT NULL,
+    key TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (pet_id, variant)
+);

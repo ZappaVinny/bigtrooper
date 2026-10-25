@@ -46,6 +46,14 @@ type Pet struct {
 	ImageKey    pgtype.Text        `json:"image_key"`
 }
 
+type PetTag struct {
+	ID        int32              `json:"id"`
+	PetID     int32              `json:"pet_id"`
+	Variant   string             `json:"variant"`
+	Key       string             `json:"key"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Report struct {
 	ID              int32              `json:"id"`
 	PetID           int32              `json:"pet_id"`

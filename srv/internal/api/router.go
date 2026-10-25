@@ -20,6 +20,7 @@ import (
 type Deps struct {
 	Queries *db.Queries
 	R2      *storage.R2
+	TagsR2  *storage.R2
 }
 
 func NewRouter(d Deps) *gin.Engine {
@@ -39,7 +40,7 @@ func NewRouter(d Deps) *gin.Engine {
 	}))
 
 	authHandler := auth.New(d.Queries)
-	petsHandler := pets.New(d.Queries, d.R2)
+	petsHandler := pets.New(d.Queries, d.R2, d.TagsR2)
 	articlesHandler := articles.New(d.Queries)
 	adminHandler := admin.New(d.Queries)
 
@@ -72,6 +73,8 @@ func NewRouter(d Deps) *gin.Engine {
 		protected.POST("/pets/:id/image/upload-url", petsHandler.RequestImageUpload)
 		protected.PUT("/pets/:id/image", petsHandler.ConfirmImage)
 		protected.DELETE("/pets/:id/image", petsHandler.DeleteImage)
+		protected.GET("/pets/:id/tags", petsHandler.ListTags)
+		protected.POST("/pets/:id/tags", petsHandler.CreateTags)
 
 		protected.GET("/pets/:id/found", petsHandler.FoundInfo)
 	}

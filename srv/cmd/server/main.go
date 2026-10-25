@@ -29,13 +29,18 @@ func main() {
 		AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
 		SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
 		Bucket:          os.Getenv("R2_BUCKET"),
-		PublicURL:       os.Getenv("R2_PUBLIC_URL"),
+		PublicURL:       os.Getenv("R2_IMAGES_PUBLIC_URL"),
 	})
 	if err != nil {
 		log.Fatal("failed to set up R2 storage:", err)
 	}
 	if !r2.Enabled() {
 		log.Println("R2_* env vars not set; pet photo uploads are disabled")
+	}
+
+	tagsR2 := r2
+	if tagsURL := os.Getenv("R2_TAGS_PUBLIC_URL"); tagsURL != "" {
+		tagsR2 = r2.WithPublicURL(tagsURL)
 	}
 
 	// Build the reverse geocoder (~7s) in the background so the server starts
@@ -62,6 +67,7 @@ func main() {
 	router := api.NewRouter(api.Deps{
 		Queries: queries,
 		R2:      r2,
+		TagsR2:  tagsR2,
 	})
 
 	log.Fatal(router.Run("localhost:8080"))
