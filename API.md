@@ -111,7 +111,7 @@ owned by someone else both return `404 pet not found`.
 | POST | `/pets` | `name`, `type`, `age`, `description`, `active` | `201` pet object |
 | GET | `/pets/:id` | – | `200` pet object |
 | PATCH | `/pets/:id` | Any of `name`, `type`, `age`, `description`, `active` | `200 { message }` |
-| DELETE | `/pets/:id` | – | `200 { message }` (also deletes its photo) |
+| DELETE | `/pets/:id` | – | `200 { message }` (also deletes its photo and tag models) |
 
 - `type` must be `Dog`, `Cat`, or `Other`. Anything else returns
   `400 { "field": "type", "issue": "invalid" }`.
@@ -156,6 +156,34 @@ never handles the file itself. The frontend does all three steps in
 - Confirming checks that the object really exists and is valid, then replaces
   (and deletes) the previous photo.
 - Returns `503` if the `R2_*` env vars aren't set.
+
+### Pet tags (3D models)
+
+The API asks the QR service (`bigtrooper-qr`) to generate the tag models,
+uploads them to R2, and stores one key per variant. Each tag's QR encodes
+`TAG_SERVICE_URL/<code>`.
+
+| Method | Path | Body | Success |
+|---|---|---|---|
+| GET | `/pets/:id/tags` | – | `200 { "tags": [...] }`, or `"tags": []` if none have been generated |
+| POST | `/pets/:id/tags` | – | `201 { "tags": [...] }` when generated; `200` with the existing tags if they already exist |
+
+```json
+{
+  "tags": [
+    { "variant": "color", "url": "https://tags.bigtrooper.com/tags/7/9f3c….3mf" },
+    { "variant": "plain", "url": "https://tags.bigtrooper.com/tags/7/41ab….stl" }
+  ]
+}
+```
+
+- Variants, sorted by name: `color` (multi-color 3MF) and `plain`
+  (single-material STL with "SCAN ME / IN LIGHT" recessed on the back).
+- POST only generates once per pet. Repeat calls return the stored tags
+  without regenerating.
+- URLs use `R2_TAGS_PUBLIC_URL` (falls back to `R2_IMAGES_PUBLIC_URL`).
+- `500 Unable to generate tag` when the QR service or the R2 upload fails.
+- Returns `503 Tag generation isn't configured` if the `R2_*` env vars aren't set.
 
 ## Found pets (public, behind the QR tag)
 
@@ -247,4 +275,4 @@ title changes.
 
 | Feature | Endpoints | Marker |
 |---|---|---|
-| Tag (3D model) generation | `POST /pets/:id/tag` | `!QRTAG!` in `web/src/api/tags.ts` |
+| Frontend for tag generation (the API is built, see [Pet tags](#pet-tags-3d-models)) | `GET`/`POST /pets/:id/tags` | `!QRTAG!` in `web/src/api/tags.ts` |
