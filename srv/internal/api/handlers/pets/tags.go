@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
@@ -23,6 +24,16 @@ func (h *Handler) tagObjects(tags []db.PetTag) []TagObject {
 		objects = append(objects, TagObject{Variant: t.Variant, URL: h.tagsR2.PublicURL(t.Key)})
 	}
 	return objects
+}
+
+var unsafeFileChars = regexp.MustCompile(`[^a-z0-9]+`)
+
+func fileSafeName(name string) string {
+	safe := strings.Trim(unsafeFileChars.ReplaceAllString(strings.ToLower(name), "_"), "_")
+	if safe == "" {
+		return "pet"
+	}
+	return safe
 }
 
 func (h *Handler) requireTagStorage(c *gin.Context) bool {
@@ -70,7 +81,7 @@ func (h *Handler) CreateTags(c *gin.Context) {
 	}
 
 	link := strings.TrimRight(os.Getenv("TAG_SERVICE_URL"), "/") + "/" + url.PathEscape(pet.Code)
-	keys, err := tag.GenerateTag(c, h.tagsR2, pet.ID, tag.Tag{Link: link, Type: "pet"})
+	keys, err := tag.GenerateTag(c, h.tagsR2, pet.ID, fileSafeName(pet.Name), tag.Tag{Link: link, Type: "pet"})
 	if err != nil {
 		log.Printf("generate tag: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to generate tag"})

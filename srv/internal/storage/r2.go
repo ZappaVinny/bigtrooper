@@ -150,16 +150,20 @@ func (r *R2) Head(ctx context.Context, key string) (size int64, contentType stri
 	return aws.ToInt64(out.ContentLength), aws.ToString(out.ContentType), nil
 }
 
-func (r *R2) Put(ctx context.Context, key, contentType string, body []byte) error {
+func (r *R2) Put(ctx context.Context, key, contentType, filename string, body []byte) error {
 	if !r.Enabled() {
 		return ErrNotConfigured
 	}
-	_, err := r.client.PutObject(ctx, &s3.PutObjectInput{
+	input := &s3.PutObjectInput{
 		Bucket:      aws.String(r.bucket),
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
 		Body:        bytes.NewReader(body),
-	})
+	}
+	if filename != "" {
+		input.ContentDisposition = aws.String(fmt.Sprintf("attachment; filename=%q", filename))
+	}
+	_, err := r.client.PutObject(ctx, input)
 	return err
 }
 

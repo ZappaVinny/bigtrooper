@@ -30,7 +30,7 @@ type modelsResponse struct {
 	Warnings []string `json:"warnings"`
 }
 
-func GenerateTag(ctx context.Context, r2 *storage.R2, petID int32, tag Tag) (map[string]string, error) {
+func GenerateTag(ctx context.Context, r2 *storage.R2, petID int32, name string, tag Tag) (map[string]string, error) {
 	models, err := fetchModels(ctx, tag)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,8 @@ func GenerateTag(ctx context.Context, r2 *storage.R2, petID int32, tag Tag) (map
 	keys := make(map[string]string, len(models))
 	for _, m := range models {
 		key := storage.NewKey(fmt.Sprintf("tags/%d", petID), m.Extension)
-		if err := r2.Put(ctx, key, m.ContentType, m.Data); err != nil {
+		filename := fmt.Sprintf("%s_tag_%s.%s", name, m.Variant, m.Extension)
+		if err := r2.Put(ctx, key, m.ContentType, filename, m.Data); err != nil {
 			for _, uploaded := range keys {
 				if err := r2.Delete(ctx, uploaded); err != nil {
 					log.Printf("delete tag %s: %v", uploaded, err)

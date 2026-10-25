@@ -41,6 +41,8 @@ type ButtonProps = {
   fullWidth?: boolean;
   className?: string;
   to?: string;
+  /** An external URL, opened in a new tab. Use `to` for links inside the app. */
+  href?: string;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
   onClick?: () => void;
@@ -56,6 +58,7 @@ export default function Button({
   fullWidth = false,
   className,
   to,
+  href,
   type = "button",
   disabled,
   onClick,
@@ -89,6 +92,21 @@ export default function Button({
       <Link to={to} onClick={onClick} className={classes} aria-label={ariaLabel}>
         {content}
       </Link>
+    );
+  }
+
+  if (href && !disabled) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        className={classes}
+        aria-label={ariaLabel}
+      >
+        {content}
+      </a>
     );
   }
 

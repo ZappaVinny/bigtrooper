@@ -182,6 +182,8 @@ uploads them to R2, and stores one key per variant. Each tag's QR encodes
 - POST only generates once per pet. Repeat calls return the stored tags
   without regenerating.
 - URLs use `R2_TAGS_PUBLIC_URL` (falls back to `R2_IMAGES_PUBLIC_URL`).
+- Files download as `<petname>_tag_<variant>.<ext>` (e.g. `trooper_tag_color.3mf`).
+  The pet name is lowercased with anything other than `a-z0-9` turned into `_`.
 - `500 Unable to generate tag` when the QR service or the R2 upload fails.
 - Returns `503 Tag generation isn't configured` if the `R2_*` env vars aren't set.
 
@@ -270,9 +272,3 @@ title changes.
   `409 { "field": "title", "issue": "duplicate" }`. Deleted articles don't count,
   so their titles can be reused.
 - **Bad category:** an unknown `category_id` returns `400 not_found`.
-
-## Planned (not built yet)
-
-| Feature | Endpoints | Marker |
-|---|---|---|
-| Frontend for tag generation (the API is built, see [Pet tags](#pet-tags-3d-models)) | `GET`/`POST /pets/:id/tags` | `!QRTAG!` in `web/src/api/tags.ts` |

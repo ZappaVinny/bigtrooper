@@ -87,6 +87,7 @@ export default function PetCard({
             icon={<QrIcon />}
             iconPosition="left"
             onClick={onTag}
+            disabled={!active}
           >
             Tag
           </Button>
