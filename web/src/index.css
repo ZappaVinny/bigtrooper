@@ -43,13 +43,15 @@
     100% { transform: translateX(250%); }
   }
 
-  --animate-gallop: gallop 0.5s ease-in-out infinite;
+  /* Steps through the 4-frame sprite (extended, tucked, planted, push-off),
+     bobbing the body so it rises in flight and drops on the planted frame. */
+  --animate-gallop: gallop 0.44s step-end infinite;
 
   @keyframes gallop {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    25% { transform: translateY(-5px) rotate(-3deg); }
-    50% { transform: translateY(-2px) rotate(1deg); }
-    75% { transform: translateY(-4px) rotate(-1deg); }
+    0%, 100% { background-position-x: 0%; translate: 0 -3px; }
+    25% { background-position-x: 33.333%; translate: 0 -1px; }
+    50% { background-position-x: 66.667%; translate: 0 0; }
+    75% { background-position-x: 100%; translate: 0 -4px; }
   }
 
   --animate-run-across: run-across 2.4s linear infinite;

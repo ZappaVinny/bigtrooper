@@ -1,4 +1,4 @@
-import TrooperRunning from "../assets/trooper-running.png";
+import TrooperRunSprite from "../assets/trooper-run-sprite.webp";
 
 // Loader for waits longer than a few seconds: Trooper gallops along a track
 // while an indeterminate bar runs underneath. With reduced motion the dog
@@ -21,10 +21,10 @@ export default function TrooperLoader({
       <div className="relative h-20 w-full max-w-sm overflow-hidden">
         <div className="absolute inset-x-0 bottom-1 h-px bg-trooper-tan/40" />
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2 motion-safe:animate-run-across">
-          <img
-            src={TrooperRunning}
-            alt=""
-            className="h-16 w-auto max-w-none origin-bottom motion-safe:animate-gallop"
+          <div
+            aria-hidden
+            style={{ backgroundImage: `url(${TrooperRunSprite})` }}
+            className="aspect-640/263 h-16 bg-size-[400%_100%] bg-no-repeat motion-safe:animate-gallop"
           />
         </div>
       </div>
