@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api"
@@ -20,6 +22,14 @@ func main() {
 		log.Fatal("config: ", err)
 	}
 
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:            os.Getenv("SENTRY_DSN"),
+		SendDefaultPII: true,
+	}); err != nil {
+		log.Printf("sentry init: %v", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
 	pool := connectDB(os.Getenv("DATABASE_URL"))
 	defer pool.Close()
 	queries := db.New(pool)
@@ -32,7 +42,7 @@ func main() {
 		PublicURL:       os.Getenv("R2_IMAGES_PUBLIC_URL"),
 	})
 	if err != nil {
-		log.Fatal("failed to set up R2 storage:", err)
+		fatal("failed to set up R2 storage", err)
 	}
 	if !r2.Enabled() {
 		log.Println("R2_* env vars not set; pet photo uploads are disabled")
@@ -70,13 +80,26 @@ func main() {
 		TagsR2:  tagsR2,
 	})
 
-	log.Fatal(router.Run("localhost:8080"))
+	if err := router.Run("localhost:8080"); err != nil {
+		fatal("server stopped", err)
+	}
 }
 
 func connectDB(databaseURL string) *pgxpool.Pool {
 	pool, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
-		log.Fatal("failed to connect to db:", err)
+		fatal("failed to connect to db", err)
 	}
 	return pool
+}
+
+// fatal is used instead of log.Fatal for any failure after sentry.Init.
+// log.Fatal calls os.Exit, which skips deferred calls, so the deferred
+// sentry.Flush in main never runs and the error is never sent. This reports
+// the error and waits for it to send before exiting. The config.Load failure
+// still uses log.Fatal because Sentry isn't set up at that point.
+func fatal(msg string, err error) {
+	sentry.CaptureException(fmt.Errorf("%s: %w", msg, err))
+	sentry.Flush(2 * time.Second)
+	log.Fatal(msg, ": ", err)
 }

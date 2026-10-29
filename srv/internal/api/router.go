@@ -13,6 +13,7 @@ import (
 	"github.com/ZappaVinny/bigtrooper/srv/internal/api/middleware"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/db"
 	"github.com/ZappaVinny/bigtrooper/srv/internal/storage"
+	"github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +26,8 @@ type Deps struct {
 
 func NewRouter(d Deps) *gin.Engine {
 	r := gin.Default()
+	// Repanic hands the panic back to gin's Recovery so it still returns a 500.
+	r.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
 	configureClientIP(r)
 
 	origins := splitList(os.Getenv("CORS_ORIGINS"))
